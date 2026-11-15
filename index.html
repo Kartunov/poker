@@ -1,1 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Покерный Рогалик</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Верхняя панель (HP и Монеты) -->
+        <header id="top-bar">
+            <div class="stat">❤️ HP: <span id="ui-hp">50</span>/50</div>
+            <div class="stat">💰 Монеты: <span id="ui-coins">3</span></div>
+        </header>
 
+        <!-- Сама карта -->
+        <main id="map-container">
+            <!-- Сетка карты будет генерироваться через JS -->
+        </main>
+
+        <!-- Нижняя панель (описание комнаты и кнопки) -->
+        <footer id="bottom-bar">
+            <div id="room-text">Добро пожаловать в подземелье. Выберите, куда пойти.</div>
+        </footer>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
