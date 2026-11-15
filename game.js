@@ -14,21 +14,24 @@ const connections = {
     'enemy2':   ['enemy1', 'event'], 'event': ['enemy2', 'boss'], 'boss': ['event']
 };
 
-let player = { hp: 50, maxHp: 50, coins: 3, currentRoomId: 'start', visitedRooms: ['start'], defeatedEnemies: [] };
+let player = { hp: 50, maxHp: 50, coins: 3, tickets: 0, currentRoomId: 'start', visitedRooms: ['start'], defeatedEnemies: [] };
 
 // --- БОЕВАЯ СИСТЕМА ---
 let combat = {
     active: false,
+    roomId: '',
+    enemyName: 'Скелет',
     enemyHp: 20,
     enemyMaxHp: 20,
-    turn: 0,
-    dice: { enemy: [1,1,1,1,1], pAtk: [1,1,1,1,1], pDef: [1,1,1,1,1] },
+    enemyHasDef: false,
+    dice: { enemyAtk: [], enemyDef: [], pAtk: [], pDef: [] },
     holds: { pAtk: [false,false,false,false,false], pDef: [false,false,false,false,false] },
     rerollUsed: false
 };
 
-// Функция расчета комбинации
 function getCombo(diceArray) {
+    if (!diceArray || diceArray.length === 0) return { name: 'Пустая', total: 0 };
+    
     let counts = {}; diceArray.forEach(d => counts[d] = (counts[d] || 0) + 1);
     let countsArray = Object.values(counts).sort((a, b) => b - a);
     let values = Object.keys(counts).map(Number).sort((a, b) => a - b);
@@ -45,11 +48,7 @@ function getCombo(diceArray) {
     return { name, total: Math.ceil(sum / 2) + points };
 }
 
-// --- ЛОГИКА КАРТЫ ---
-function initGame() {
-    createMapGrid();
-    updateUI();
-}
+function initGame() { createMapGrid(); updateUI(); }
 
 function createMapGrid() {
     const container = document.getElementById('map-container');
@@ -78,8 +77,8 @@ function tryMoveTo(targetRoomId) {
         player.currentRoomId = targetRoomId;
         if (!player.visitedRooms.includes(targetRoomId)) player.visitedRooms.push(targetRoomId);
         
-        // Если это комната с врагом и мы его еще не били
-        if (rooms[targetRoomId].type === 'enemy' && !player.defeatedEnemies.includes(targetRoomId)) {
+        // Если в комнате есть враг и он еще не побежден
+        if ((rooms[targetRoomId].type === 'enemy' || rooms[targetRoomId].type === 'boss') && !player.defeatedEnemies.includes(targetRoomId)) {
             startCombat(targetRoomId);
         } else {
             updateUI();
@@ -91,6 +90,8 @@ function tryMoveTo(targetRoomId) {
 function updateUI() {
     document.getElementById('ui-hp').innerText = player.hp;
     document.getElementById('ui-coins').innerText = player.coins;
+    document.getElementById('ui-tickets').innerText = player.tickets;
+
     Object.keys(rooms).forEach(id => {
         const el = document.getElementById(`room-${id}`);
         el.className = `room ${rooms[id].color}`; el.innerHTML = rooms[id].icon;
@@ -108,29 +109,53 @@ function updateUI() {
 
 function showText(text) { document.getElementById('room-text').innerText = text; }
 
-// --- БОЕВАЯ ЛОГИКА ---
+// --- БОЙ ---
 function startCombat(roomId) {
-    combat.active = true;
-    combat.enemyHp = 20; combat.enemyMaxHp = 20;
+    combat.active = true; combat.roomId = roomId;
     combat.rerollUsed = false;
+
+    // Настройка врага в зависимости от комнаты
+    if (roomId === 'enemy1') {
+        combat.enemyName = '💀 Скелет-Атакер';
+        combat.enemyHp = 20; combat.enemyMaxHp = 20; combat.enemyHasDef = false;
+    } else if (roomId === 'enemy2') {
+        combat.enemyName = '💀 Скелет-Защитник';
+        combat.enemyHp = 25; combat.enemyMaxHp = 25; combat.enemyHasDef = true;
+    } else if (roomId === 'boss') {
+        combat.enemyName = '👑 Босс-Скелет';
+        combat.enemyHp = 30; combat.enemyMaxHp = 30; combat.enemyHasDef = true;
+    }
+
+    document.getElementById('enemy-name').innerText = combat.enemyName;
+    document.getElementById('enemy-hp').innerText = combat.enemyHp;
+    document.getElementById('enemy-max-hp').innerText = combat.enemyMaxHp;
+    
+    document.getElementById('enemy-def-container').style.display = combat.enemyHasDef ? 'block' : 'none';
+
     document.getElementById('map-screen').style.display = 'none';
     document.getElementById('combat-screen').style.display = 'flex';
-    document.getElementById('enemy-hp').innerText = combat.enemyHp;
     document.getElementById('player-hp').innerText = player.hp;
     document.getElementById('player-hp-bar').style.width = (player.hp / player.maxHp * 100) + '%';
     
     document.getElementById('btn-roll').style.display = 'block';
     document.getElementById('btn-fight').style.display = 'none';
-    document.getElementById('combat-log').innerText = "Скелет готовится к бою...";
-    renderCombatDice(true);
+    document.getElementById('combat-log').innerText = `${combat.enemyName} готовится к бою...`;
+    
+    resetDice();
+    renderCombatDice();
+    updatePreviews();
 }
 
-function rollDiceArray() {
-    return [1,1,1,1,1].map(() => Math.floor(Math.random() * 6) + 1);
+function rollDiceArray() { return [1,1,1,1,1].map(() => Math.floor(Math.random() * 6) + 1); }
+
+function resetDice() {
+    combat.dice = { enemyAtk: [1,1,1,1,1], enemyDef: [1,1,1,1,1], pAtk: [1,1,1,1,1], pDef: [1,1,1,1,1] };
 }
 
 function startTurn() {
-    combat.dice.enemy = rollDiceArray();
+    combat.dice.enemyAtk = rollDiceArray();
+    if (combat.enemyHasDef) combat.dice.enemyDef = rollDiceArray();
+    
     combat.dice.pAtk = rollDiceArray();
     combat.dice.pDef = rollDiceArray();
     combat.holds.pAtk = [false,false,false,false,false];
@@ -142,7 +167,9 @@ function startTurn() {
     document.getElementById('btn-reroll-atk').disabled = false;
     document.getElementById('btn-reroll-def').disabled = false;
     document.getElementById('combat-log').innerText = "Выберите кубики для переброса или бейте!";
+    
     renderCombatDice();
+    updatePreviews();
 }
 
 function toggleHold(type, index) {
@@ -160,40 +187,43 @@ function reroll(type) {
     let arr = type === 'atk' ? combat.dice.pAtk : combat.dice.pDef;
     let holds = type === 'atk' ? combat.holds.pAtk : combat.holds.pDef;
     
-    for(let i=0; i<5; i++) {
-        if (!holds[i]) arr[i] = Math.floor(Math.random() * 6) + 1;
-    }
+    for(let i=0; i<5; i++) { if (!holds[i]) arr[i] = Math.floor(Math.random() * 6) + 1; }
     document.getElementById('combat-log').innerText = `Вы перебросили ${type === 'atk' ? 'Атаку' : 'Защиту'}. Бейте!`;
+    
     renderCombatDice();
+    updatePreviews();
 }
 
 function resolveTurn() {
     let pAtk = getCombo(combat.dice.pAtk);
     let pDef = getCombo(combat.dice.pDef);
-    let eAtk = getCombo(combat.dice.enemy);
+    let eAtk = getCombo(combat.dice.enemyAtk);
+    let eDef = combat.enemyHasDef ? getCombo(combat.dice.enemyDef) : { total: 0 };
 
-    let dmgToEnemy = pAtk.total;
+    // Урон по врагу (учитываем его защиту)
+    let dmgToEnemy = Math.max(0, pAtk.total - eDef.total);
     combat.enemyHp -= dmgToEnemy;
     if (combat.enemyHp < 0) combat.enemyHp = 0;
     document.getElementById('enemy-hp').innerText = combat.enemyHp;
 
-    let log = `Ты атакуешь на ${dmgToEnemy} (${pAtk.name}). `;
+    let log = `Ты бьешь на ${pAtk.total} (${pAtk.name}). Враг блокирует ${eDef.total}. Проходит ${dmgToEnemy} урона. `;
 
     if (combat.enemyHp <= 0) {
-        log += `Скелет разваливается! Победа!`;
+        log += `Враг разваливается! Победа!`;
         document.getElementById('combat-log').innerText = log;
         setTimeout(winCombat, 1500);
         return;
     }
 
+    // Урон по игроку
     let dmgToPlayer = Math.max(0, eAtk.total - pDef.total);
     player.hp -= dmgToPlayer;
-    if (player.hp < 1) player.hp = 1; // Божественное вмешательство (туториал)
+    if (player.hp < 1) player.hp = 1; // Божественное вмешательство
 
     document.getElementById('player-hp').innerText = player.hp;
     document.getElementById('player-hp-bar').style.width = (player.hp / player.maxHp * 100) + '%';
     
-    log += `Скелет бьет на ${eAtk.total}. Твоя защита ${pDef.total} (${pDef.name}). Ты получаешь ${dmgToPlayer} урона.`;
+    log += `Враг бьет на ${eAtk.total}. Твоя защита ${pDef.total} (${pDef.name}). Ты получаешь ${dmgToPlayer} урона.`;
     document.getElementById('combat-log').innerText = log;
 
     document.getElementById('btn-fight').style.display = 'none';
@@ -205,25 +235,29 @@ function winCombat() {
     combat.active = false;
     player.defeatedEnemies.push(player.currentRoomId);
     
-    // Награда
-    let coins = Math.floor(Math.random() * 3) + 1;
-    player.coins += coins;
+    // Награды за разных врагов
+    let rewardText = "";
+    if (combat.roomId === 'enemy1') {
+        let coins = Math.floor(Math.random() * 3) + 1;
+        player.coins += coins;
+        rewardText = `Вы победили скелета и нашли ${coins} монет(ы)!`;
+    } else if (combat.roomId === 'enemy2') {
+        player.tickets += 1;
+        rewardText = `Вы победили защитника и нашли Билет (🎟️)!`;
+    } else {
+        rewardText = `Вы победили Босса!`;
+    }
     
     document.getElementById('map-screen').style.display = 'flex';
     document.getElementById('combat-screen').style.display = 'none';
     updateUI();
-    showText(`Вы победили скелета и нашли ${coins} монет(ы)!`);
+    showText(rewardText);
 }
 
-function renderCombatDice(reset = false) {
-    if (reset) {
-        combat.dice.enemy = [1,1,1,1,1];
-        combat.dice.pAtk = [1,1,1,1,1];
-        combat.dice.pDef = [1,1,1,1,1];
-    }
-
+function renderCombatDice() {
     const renderPool = (diceArr, containerId, isPlayer, type) => {
         const container = document.getElementById(containerId);
+        if(!container) return;
         container.innerHTML = '';
         diceArr.forEach((val, i) => {
             const d = document.createElement('div');
@@ -237,9 +271,19 @@ function renderCombatDice(reset = false) {
         });
     };
 
-    renderPool(combat.dice.enemy, 'enemy-dice', false);
+    renderPool(combat.dice.enemyAtk, 'enemy-dice', false);
+    if (combat.enemyHasDef) renderPool(combat.dice.enemyDef, 'enemy-def-dice', false);
     renderPool(combat.dice.pAtk, 'player-atk-dice', true, 'pAtk');
     renderPool(combat.dice.pDef, 'player-def-dice', true, 'pDef');
+}
+
+function updatePreviews() {
+    document.getElementById('preview-atk').innerText = getCombo(combat.dice.pAtk).total;
+    document.getElementById('preview-def').innerText = getCombo(combat.dice.pDef).total;
+    document.getElementById('enemy-atk-total').innerText = getCombo(combat.dice.enemyAtk).total;
+    if (combat.enemyHasDef) {
+        document.getElementById('enemy-def-total').innerText = getCombo(combat.dice.enemyDef).total;
+    }
 }
 
 window.onload = initGame;
