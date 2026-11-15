@@ -30,53 +30,67 @@
             </div>
             <div class="build-slots" id="build-slots"></div>
             
-            <h2>Сумка (Инвентарь)</h2>
+            <h2>Сумка (Предметы)</h2>
             <div class="inventory-list" id="inventory-list"></div>
+
+            <h2>Билеты (Расходники)</h2>
+            <div class="ticket-list" id="ticket-list"></div>
+        </div>
+
+        <!-- ================= ЭКРАН МАГАЗИНА ================= -->
+        <div id="shop-screen" style="display: none;">
+            <div class="inv-header">
+                <h2>Магазин</h2>
+                <button class="btn-close" onclick="closeShop()">✖ Выйти</button>
+            </div>
+            
+            <div class="shop-items" id="shop-items">
+                <!-- Товары будут тут -->
+            </div>
+
+            <div class="piggy-bank-section">
+                <h3>🐷 Копилка</h3>
+                <p>Монет в копилке: <b id="piggy-amount">0</b></p>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-small" onclick="depositPiggy()">Кинуть 1 монету</button>
+                    <button class="btn-small btn-danger" onclick="breakPiggy()">Разбить!</button>
+                </div>
+            </div>
         </div>
 
         <!-- ================= ЭКРАН БОЯ ================= -->
         <div id="combat-screen" style="display: none;">
-            <!-- Враг -->
             <div class="enemy-section">
                 <div class="enemy-info">
                     <span id="enemy-name">💀 Скелет</span>
                     <span class="hp-text">HP: <span id="enemy-hp">20</span>/<span id="enemy-max-hp">20</span></span>
                 </div>
-                
                 <div class="hand-section">
                     <div class="hand-title">⚔️ Атака врага: <span id="enemy-atk-total" class="preview-text">0</span></div>
                     <div class="dice-pool enemy-dice" id="enemy-dice"></div>
                 </div>
-
                 <div class="hand-section" id="enemy-def-container" style="display: none;">
                     <div class="hand-title">🛡️ Защита врага: <span id="enemy-def-total" class="preview-text">0</span></div>
                     <div class="dice-pool enemy-dice" id="enemy-def-dice"></div>
                 </div>
             </div>
-
             <div id="combat-log">Нажмите "Бросок кубиков", чтобы начать.</div>
-
-            <!-- Игрок -->
             <div class="player-section">
                 <div class="hp-bar-container">
                     <div class="hp-bar" id="player-hp-bar" style="width: 100%;"></div>
                     <span class="hp-label">Ты (HP: <span id="player-hp">50</span>/50)</span>
                 </div>
-                
                 <div class="combat-build-display" id="combat-build-display"></div>
-
                 <div class="hand-section">
                     <div class="hand-title">⚔️ Твоя Атака: <span id="preview-atk" class="preview-text">0</span></div>
                     <div class="dice-pool player-dice" id="player-atk-dice"></div>
                     <button id="btn-reroll-atk" class="btn-reroll" onclick="reroll('atk')" disabled>Переброс атаки</button>
                 </div>
-
                 <div class="hand-section">
                     <div class="hand-title">🛡️ Твоя Защита: <span id="preview-def" class="preview-text">0</span></div>
                     <div class="dice-pool player-dice" id="player-def-dice"></div>
                     <button id="btn-reroll-def" class="btn-reroll" onclick="reroll('def')" disabled>Переброс защиты</button>
                 </div>
-
                 <div class="action-buttons">
                     <button id="btn-roll" class="btn-main" onclick="startTurn()">Бросок кубиков</button>
                     <button id="btn-fight" class="btn-main" style="display:none;" onclick="resolveTurn()">В БОЙ!</button>
