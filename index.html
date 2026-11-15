@@ -8,23 +8,58 @@
 </head>
 <body>
     <div id="app">
-        <!-- Верхняя панель (HP и Монеты) -->
-        <header id="top-bar">
-            <div class="stat">❤️ HP: <span id="ui-hp">50</span>/50</div>
-            <div class="stat">💰 Монеты: <span id="ui-coins">3</span></div>
-        </header>
+        <!-- ================= ЭКРАН КАРТЫ ================= -->
+        <div id="map-screen">
+            <header id="top-bar">
+                <div class="stat">❤️ HP: <span id="ui-hp">50</span>/50</div>
+                <div class="stat">💰 Монеты: <span id="ui-coins">3</span></div>
+            </header>
+            <main id="map-container"></main>
+            <footer id="bottom-bar">
+                <div id="room-text">Добро пожаловать. Выберите, куда пойти.</div>
+            </footer>
+        </div>
 
-        <!-- Сама карта -->
-        <main id="map-container">
-            <!-- Сетка карты будет генерироваться через JS -->
-        </main>
+        <!-- ================= ЭКРАН БОЯ ================= -->
+        <div id="combat-screen" style="display: none;">
+            <!-- Враг -->
+            <div class="enemy-section">
+                <div class="enemy-info">
+                    <span>💀 Скелет</span>
+                    <span class="hp-text">HP: <span id="enemy-hp">20</span>/20</span>
+                </div>
+                <div class="dice-pool enemy-dice" id="enemy-dice"></div>
+            </div>
 
-        <!-- Нижняя панель (описание комнаты и кнопки) -->
-        <footer id="bottom-bar">
-            <div id="room-text">Добро пожаловать в подземелье. Выберите, куда пойти.</div>
-        </footer>
+            <!-- Лог боя -->
+            <div id="combat-log">Нажмите "Бросок кубиков", чтобы начать.</div>
+
+            <!-- Игрок -->
+            <div class="player-section">
+                <div class="hp-bar-container">
+                    <div class="hp-bar" id="player-hp-bar" style="width: 100%;"></div>
+                    <span class="hp-label">Ты (HP: <span id="player-hp">50</span>/50)</span>
+                </div>
+                
+                <div class="hand-section">
+                    <div class="hand-title">⚔️ Атака (Урон)</div>
+                    <div class="dice-pool player-dice" id="player-atk-dice"></div>
+                    <button id="btn-reroll-atk" class="btn-reroll" onclick="reroll('atk')" disabled>Переброс атаки</button>
+                </div>
+
+                <div class="hand-section">
+                    <div class="hand-title">🛡️ Защита (Блок)</div>
+                    <div class="dice-pool player-dice" id="player-def-dice"></div>
+                    <button id="btn-reroll-def" class="btn-reroll" onclick="reroll('def')" disabled>Переброс защиты</button>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="btn-roll" class="btn-main" onclick="startTurn()">Бросок кубиков</button>
+                    <button id="btn-fight" class="btn-main" style="display:none;" onclick="resolveTurn()">В БОЙ!</button>
+                </div>
+            </div>
+        </div>
     </div>
-    
     <script src="game.js"></script>
 </body>
 </html>
