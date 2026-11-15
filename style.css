@@ -55,7 +55,7 @@ body { margin: 0; background-color: var(--bg-color); color: var(--text-color); d
 .hp-bar { height: 100%; background: #4CAF50; transition: width 0.3s ease; }
 .hp-label { position: absolute; top: 0; left: 0; width: 100%; text-align: center; font-size: 11px; line-height: 18px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; }
 
-.combat-build-display { display: flex; gap: 5px; margin-bottom: 10px; justify-content: center; }
+.combat-build-display { display: flex; gap: 5px; margin-bottom: 10px; justify-content: center; min-height: 30px; }
 .combat-build-item { width: 30px; height: 30px; background: #333; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 14px; border: 1px solid var(--yellow); }
 
 .hand-section { margin-bottom: 5px; }
@@ -104,6 +104,4 @@ body { margin: 0; background-color: var(--bg-color); color: var(--text-color); d
 .ticket-info { display: flex; flex-direction: column; }
 .ticket-name { font-size: 14px; font-weight: bold; color: #ce93d8; }
 .ticket-desc { font-size: 11px; color: #888; margin-top: 2px; }
-
-/* Кнопка продажи в магазине */
 .sell-btn { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; margin-left: auto; }
