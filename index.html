@@ -13,6 +13,7 @@
             <header id="top-bar">
                 <div class="stat">❤️ HP: <span id="ui-hp">50</span>/50</div>
                 <div class="stat">💰 Монеты: <span id="ui-coins">3</span></div>
+                <div class="stat">🎟️ Билеты: <span id="ui-tickets">0</span></div>
             </header>
             <main id="map-container"></main>
             <footer id="bottom-bar">
@@ -25,10 +26,19 @@
             <!-- Враг -->
             <div class="enemy-section">
                 <div class="enemy-info">
-                    <span>💀 Скелет</span>
-                    <span class="hp-text">HP: <span id="enemy-hp">20</span>/20</span>
+                    <span id="enemy-name">💀 Скелет</span>
+                    <span class="hp-text">HP: <span id="enemy-hp">20</span>/<span id="enemy-max-hp">20</span></span>
                 </div>
-                <div class="dice-pool enemy-dice" id="enemy-dice"></div>
+                
+                <div class="hand-section">
+                    <div class="hand-title">⚔️ Атака врага: <span id="enemy-atk-total" class="preview-text">0</span></div>
+                    <div class="dice-pool enemy-dice" id="enemy-dice"></div>
+                </div>
+
+                <div class="hand-section" id="enemy-def-container" style="display: none;">
+                    <div class="hand-title">🛡️ Защита врага: <span id="enemy-def-total" class="preview-text">0</span></div>
+                    <div class="dice-pool enemy-dice" id="enemy-def-dice"></div>
+                </div>
             </div>
 
             <!-- Лог боя -->
@@ -42,13 +52,13 @@
                 </div>
                 
                 <div class="hand-section">
-                    <div class="hand-title">⚔️ Атака (Урон)</div>
+                    <div class="hand-title">⚔️ Твоя Атака: <span id="preview-atk" class="preview-text">0</span></div>
                     <div class="dice-pool player-dice" id="player-atk-dice"></div>
                     <button id="btn-reroll-atk" class="btn-reroll" onclick="reroll('atk')" disabled>Переброс атаки</button>
                 </div>
 
                 <div class="hand-section">
-                    <div class="hand-title">🛡️ Защита (Блок)</div>
+                    <div class="hand-title">🛡️ Твоя Защита: <span id="preview-def" class="preview-text">0</span></div>
                     <div class="dice-pool player-dice" id="player-def-dice"></div>
                     <button id="btn-reroll-def" class="btn-reroll" onclick="reroll('def')" disabled>Переброс защиты</button>
                 </div>
