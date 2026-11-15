@@ -28,13 +28,13 @@ const allTickets = {
     'ticket_heal': { id: 'ticket_heal', name: 'Аптечка', icon: '❤️', desc: 'Восполнить 2к6 пунктов здоровья.', effect: 'heal' }
 };
 
-// Состояние игрока
 let player = { 
     hp: 50, maxHp: 50, coins: 3, currentRoomId: 'start', visitedRooms: ['start'], defeatedEnemies: [],
     inventory: [], build: [null, null, null, null, null],
-    ticketsInventory: [], // Массив билетов
-    piggyBank: 0, // Монеты в копилке
-    shopStock: { ticketBought: false, itemBought: false } // Что куплено в магазине
+    ticketsInventory: [], 
+    piggyBank: 0, 
+    piggyBroken: false, // Флаг, чтобы копилку нельзя было разбить дважды
+    shopStock: { ticketBought: false, itemBought: false } 
 };
 
 let combat = {
@@ -55,22 +55,17 @@ function getDynamicDesc(item) {
 }
 
 // --- ИНВЕНТАРЬ ---
-function toggleInventory(isShopOpen = false) {
+function toggleInventory() {
     const inv = document.getElementById('inventory-screen');
     const map = document.getElementById('map-screen');
-    const shop = document.getElementById('shop-screen');
-    
     if (inv.style.display === 'none' || inv.style.display === '') {
-        inv.style.display = 'flex'; map.style.display = 'none'; shop.style.display = 'none'; 
-        renderInventory(isShopOpen);
+        inv.style.display = 'flex'; map.style.display = 'none'; renderInventory();
     } else {
-        inv.style.display = 'none'; 
-        if (isShopOpen) shop.style.display = 'flex'; else map.style.display = 'flex';
-        updateUI();
+        inv.style.display = 'none'; map.style.display = 'flex'; updateUI();
     }
 }
 
-function renderInventory(isShop = false) {
+function renderInventory() {
     const buildSlots = document.getElementById('build-slots');
     buildSlots.innerHTML = '';
     player.build.forEach((item, index) => {
@@ -93,17 +88,7 @@ function renderInventory(isShop = false) {
             <div class="inv-item-header"><span class="icon">${item.icon}</span><span>${item.name}</span></div>
             <div class="inv-item-desc">${getDynamicDesc(item)}</div>
         `;
-        // Если мы в магазине, добавляем кнопку продажи
-        if (isShop) {
-            el.style.flexDirection = 'row';
-            el.style.alignItems = 'center';
-            const btn = document.createElement('button');
-            btn.className = 'sell-btn'; btn.innerText = 'Продать (3💰)';
-            btn.onclick = (e) => { e.stopPropagation(); sellItem(item); };
-            el.appendChild(btn);
-        } else {
-            el.onclick = () => equipItem(item);
-        }
+        el.onclick = () => equipItem(item);
         invList.appendChild(el);
     });
 
@@ -111,7 +96,7 @@ function renderInventory(isShop = false) {
     const ticketList = document.getElementById('ticket-list');
     ticketList.innerHTML = '';
     if (player.ticketsInventory.length === 0) ticketList.innerHTML = '<div style="color:#666; text-align:center; padding:10px;">Нет билетов</div>';
-    player.ticketsInventory.forEach((tick, index) => {
+    player.ticketsInventory.forEach(tick => {
         const el = document.createElement('div');
         el.className = 'ticket-item';
         el.innerHTML = `
@@ -149,15 +134,13 @@ function openShop() {
 function closeShop() {
     document.getElementById('shop-screen').style.display = 'none';
     document.getElementById('map-screen').style.display = 'flex';
-    updateUI();
-    showText("Вы вышли из магазина.");
+    updateUI(); showText("Вы вышли из магазина.");
 }
 
 function renderShop() {
     const shopContainer = document.getElementById('shop-items');
     shopContainer.innerHTML = '';
 
-    // 1. Билет
     if (!player.shopStock.ticketBought) {
         const ticketEl = document.createElement('div');
         ticketEl.className = 'shop-item';
@@ -171,7 +154,6 @@ function renderShop() {
         shopContainer.appendChild(ticketEl);
     }
 
-    // 2. Предмет (Единичный козырь)
     if (!player.shopStock.itemBought) {
         const itemEl = document.createElement('div');
         itemEl.className = 'shop-item';
@@ -185,41 +167,49 @@ function renderShop() {
         shopContainer.appendChild(itemEl);
     }
 
-    // 3. Инвентарь для продажи
     const sellSection = document.createElement('div');
     sellSection.style.marginTop = "20px";
     sellSection.innerHTML = `<h3>Твои вещи (Продажа)</h3>`;
     const invList = document.createElement('div');
-    invList.className = 'inventory-list';
-    invList.style.marginTop = "10px";
+    invList.className = 'inventory-list'; invList.style.marginTop = "10px";
     player.inventory.forEach(item => {
         const el = document.createElement('div');
         el.className = 'inv-item';
+        el.style.flexDirection = 'row'; el.style.alignItems = 'center';
         el.innerHTML = `<div class="inv-item-header"><span class="icon">${item.icon}</span><span>${item.name}</span></div>`;
         const btn = document.createElement('button');
         btn.className = 'sell-btn'; btn.innerText = 'Продать (3💰)';
-        btn.onclick = () => sellItem(item);
+        btn.onclick = (e) => { e.stopPropagation(); sellItem(item); };
         el.appendChild(btn);
         invList.appendChild(el);
     });
     sellSection.appendChild(invList);
     shopContainer.appendChild(sellSection);
 
-    // Обновляем копилку
-    document.getElementById('piggy-amount').innerText = player.piggyBank;
+    // Отрисовка копилки
+    const piggySection = document.getElementById('piggy-bank-section');
+    if (player.piggyBroken) {
+        piggySection.innerHTML = `<h3>🐷 Копилка</h3><p style="color:#F44336; font-weight:bold; text-align:center;">РАЗБИТА В ЭТОМ ЗАБЕГЕ</p>`;
+    } else {
+        piggySection.innerHTML = `
+            <h3>🐷 Копилка</h3>
+            <p>Монет в копилке: <b>${player.piggyBank}</b></p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-small" onclick="depositPiggy()">Кинуть 1 монету</button>
+                <button class="btn-small btn-danger" onclick="breakPiggy()">Разбить!</button>
+            </div>
+        `;
+    }
 }
 
 function buyTicket() {
     if (player.coins >= 3) {
         player.coins -= 3;
-        // Выдаем случайный билет
         const keys = Object.keys(allTickets);
         const randomKey = keys[Math.floor(Math.random() * keys.length)];
         player.ticketsInventory.push({...allTickets[randomKey]});
-        
         player.shopStock.ticketBought = true;
-        updateUI();
-        renderShop();
+        updateUI(); renderShop();
         alert("Вы купили случайный билет! Проверьте инвентарь (🎒).");
     } else { alert("Не хватает монет!"); }
 }
@@ -229,8 +219,7 @@ function buyItem() {
         player.coins -= 15;
         player.inventory.push({...allItems['item_ones']});
         player.shopStock.itemBought = true;
-        updateUI();
-        renderShop();
+        updateUI(); renderShop();
         alert("Вы купили Единичный козырь!");
     } else { alert("Не хватает монет! Иди зарабатывай."); }
 }
@@ -239,82 +228,105 @@ function sellItem(item) {
     if (confirm(`Продать ${item.name} за 3 монеты?`)) {
         player.coins += 3;
         player.inventory = player.inventory.filter(i => i.id !== item.id);
-        updateUI();
-        renderShop();
+        updateUI(); renderShop();
     }
 }
 
 function depositPiggy() {
+    if (player.piggyBroken) return;
     if (player.coins > 0) {
         player.coins -= 1;
         player.piggyBank += 1;
-        updateUI();
-        document.getElementById('piggy-amount').innerText = player.piggyBank;
+        updateUI(); renderShop();
     } else { alert("У тебя нет монет!"); }
 }
 
 function breakPiggy() {
+    if (player.piggyBroken) return;
     if (player.piggyBank === 0) { alert("Копилка пуста!"); return; }
     
-    // По твоей задумке: выпадает от 5 до 15, но не больше, чем есть в копилке.
-    let drop = Math.floor(Math.random() * 11) + 5; // 5-15
+    let drop = Math.floor(Math.random() * 11) + 5; 
     let actualDrop = Math.min(drop, player.piggyBank);
     
     player.coins += actualDrop;
     player.piggyBank -= actualDrop;
+    player.piggyBroken = true; // Блокируем копилку
     
-    updateUI();
-    document.getElementById('piggy-amount').innerText = player.piggyBank;
-    alert(`Вы разбили копилку и получили ${actualDrop} монет! (Осталось: ${player.piggyBank})`);
+    updateUI(); renderShop();
+    alert(`Вы разбили копилку и получили ${actualDrop} монет!`);
 }
 
-// --- БОЙ И МАТЕМАТИКА ---
+// --- МАТЕМАТИКА ---
 function getCombo(diceArray, isPlayer = false, type = 'none') {
-    if (!diceArray || diceArray.length === 0) return { name: 'Пустая', total: 0 };
+    if (!diceArray || diceArray.length === 0) return { name: 'Пустая', total: 0, logExtra: '' };
     
-    // Логика Единичного козыря (превращаем 1 в самое частое)
+    let evalDice = [...diceArray]; // Копия, чтобы не ломать оригинал
+    let logExtra = "";
+
+    // Единичный козырь (превращаем 1 в самое частое)
     if (isPlayer && type === 'atk' && player.build.some(i => i && i.id === 'item_ones')) {
-        let onesCount = diceArray.filter(d => d === 1).length;
+        let onesCount = evalDice.filter(d => d === 1).length;
         if (onesCount > 0) {
             let countsNoOnes = {};
-            diceArray.filter(d => d !== 1).forEach(d => countsNoOnes[d] = (countsNoOnes[d] || 0) + 1);
+            evalDice.filter(d => d !== 1).forEach(d => countsNoOnes[d] = (countsNoOnes[d] || 0) + 1);
             let maxCount = 0, bestVal = 1;
             for (let val in countsNoOnes) { if (countsNoOnes[val] > maxCount) { maxCount = countsNoOnes[val]; bestVal = Number(val); } }
-            if (maxCount > 0) diceArray = diceArray.map(d => d === 1 ? bestVal : d);
+            if (maxCount > 0) evalDice = evalDice.map(d => d === 1 ? bestVal : d);
         }
     }
 
-    let counts = {}; diceArray.forEach(d => counts[d] = (counts[d] || 0) + 1);
+    let counts = {}; evalDice.forEach(d => counts[d] = (counts[d] || 0) + 1);
     let countsArray = Object.values(counts).sort((a, b) => b - a);
     let values = Object.keys(counts).map(Number).sort((a, b) => a - b);
     let sum = 0, points = 0, name = 'Пустая', isPair = false;
 
     if (countsArray[0] === 5) { let v = values[0]; sum = v * 5; points = 15; name = 'Покер'; }
     else if (countsArray[0] === 4) { let v = values.find(v => counts[v] === 4); sum = v * 4; points = 13; name = 'Каре'; }
-    else if (countsArray[0] === 3 && countsArray[1] === 2) { sum = diceArray.reduce((a, b) => a + b, 0); points = 8; name = 'Фулл-хаус'; }
-    else if (values.length === 5 && values[4] - values[0] === 4) { sum = diceArray.reduce((a, b) => a + b, 0); points = 10; name = 'Стрит'; }
+    else if (countsArray[0] === 3 && countsArray[1] === 2) { sum = evalDice.reduce((a, b) => a + b, 0); points = 8; name = 'Фулл-хаус'; }
+    else if (values.length === 5 && values[4] - values[0] === 4) { sum = evalDice.reduce((a, b) => a + b, 0); points = 10; name = 'Стрит'; }
     else if (countsArray[0] === 3) { let v = values.find(v => counts[v] === 3); sum = v * 3; points = 6; name = 'Сет'; }
     else if (countsArray[0] === 2 && countsArray[1] === 2) { values.forEach(v => { if (counts[v] === 2) sum += v * 2; }); points = 4; name = 'Две пары'; }
     else if (countsArray[0] === 2) { let v = values.find(v => counts[v] === 2); sum = v * 2; points = 2; name = 'Пара'; isPair = true; }
 
     let extraPoints = 0, extraSum = 0;
+    
     if (isPlayer && type === 'atk') {
         player.build.forEach(item => {
             if (!item) return;
-            if (item.id === 'item_pair' && isPair) extraPoints += item.pairBonus;
-            if (item.id === 'item_flat5') extraPoints += item.flatBonus;
+            if (item.id === 'item_pair' && isPair) {
+                extraPoints += item.pairBonus;
+                logExtra += ` [+${item.pairBonus}]`;
+            }
+            if (item.id === 'item_flat5') {
+                extraPoints += item.flatBonus;
+                logExtra += ` [+${item.flatBonus}]`;
+            }
             if (item.id === 'item_high') {
-                let usedDiceCounts = {...counts};
-                if (name === 'Пара') { let v = values.find(v => counts[v] === 2); usedDiceCounts[v] -= 2; }
-                else if (name === 'Сет') { let v = values.find(v => counts[v] === 3); usedDiceCounts[v] -= 3; }
-                else if (name === 'Две пары') { values.forEach(v => { if (counts[v] === 2) usedDiceCounts[v] -= 2; }); }
+                // Точный расчет оставшихся кубиков
+                let usedDiceCounts = {};
+                if (name === 'Покер') usedDiceCounts[values[0]] = 5;
+                else if (name === 'Каре') usedDiceCounts[values.find(v => counts[v] === 4)] = 4;
+                else if (name === 'Фулл-хаус') { usedDiceCounts[values.find(v => counts[v] === 3)] = 3; usedDiceCounts[values.find(v => counts[v] === 2)] = 2; }
+                else if (name === 'Стрит') { evalDice.forEach(d => usedDiceCounts[d] = (usedDiceCounts[d] || 0) + 1); }
+                else if (name === 'Сет') usedDiceCounts[values.find(v => counts[v] === 3)] = 3;
+                else if (name === 'Две пары') { values.forEach(v => { if (counts[v] === 2) usedDiceCounts[v] = 2; }); }
+                else if (name === 'Пара') usedDiceCounts[values.find(v => counts[v] === 2)] = 2;
+                
                 let remainingDice = [];
-                for (let v in usedDiceCounts) { for (let i=0; i<usedDiceCounts[v]; i++) remainingDice.push(Number(v)); }
-                if (remainingDice.length > 0) extraSum += Math.max(...remainingDice);
+                let tempCounts = {...counts};
+                for (let v in usedDiceCounts) { tempCounts[v] -= usedDiceCounts[v]; }
+                for (let v in tempCounts) { for (let i=0; i<tempCounts[v]; i++) remainingDice.push(Number(v)); }
+                
+                if (remainingDice.length > 0) {
+                    let maxD = Math.max(...remainingDice);
+                    extraSum += maxD;
+                    logExtra += ` [+${maxD} от Козыря]`;
+                }
             }
         });
     }
-    return { name, total: Math.ceil((sum + extraSum) / 2) + points + extraPoints, isPair };
+
+    return { name, total: Math.ceil((sum + extraSum) / 2) + points + extraPoints, isPair, logExtra };
 }
 
 function initGame() { createMapGrid(); updateUI(); }
@@ -352,10 +364,7 @@ function tryMoveTo(targetRoomId) {
             return;
         }
         
-        if (rooms[targetRoomId].type === 'shop') {
-            openShop();
-            return;
-        }
+        if (rooms[targetRoomId].type === 'shop') { openShop(); return; }
 
         if ((rooms[targetRoomId].type === 'enemy' || rooms[targetRoomId].type === 'boss') && !player.defeatedEnemies.includes(targetRoomId)) {
             startCombat(targetRoomId);
@@ -366,9 +375,11 @@ function tryMoveTo(targetRoomId) {
 }
 
 function triggerLoot() {
-    const keys = Object.keys(allItems);
-    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+    // Теперь здесь строго свой пул из 3 предметов, без Единичного козыря
+    const treasuryPool = ['item_pair', 'item_flat5', 'item_high'];
+    const randomKey = treasuryPool[Math.floor(Math.random() * treasuryPool.length)];
     currentLootItem = { ...allItems[randomKey] };
+    
     document.getElementById('loot-item-display').innerHTML = `
         <span class="icon">${currentLootItem.icon}</span>
         <div class="title">${currentLootItem.name}</div>
@@ -408,6 +419,19 @@ function updateUI() {
 function showText(text) { document.getElementById('room-text').innerText = text; }
 
 // --- БОЙ ---
+function updateCombatBuildDisplay() {
+    const display = document.getElementById('combat-build-display');
+    if (!display) return;
+    display.innerHTML = '';
+    player.build.forEach(item => {
+        if (item) {
+            const el = document.createElement('div');
+            el.className = 'combat-build-item'; el.innerText = item.icon; el.title = item.name;
+            display.appendChild(el);
+        }
+    });
+}
+
 function startCombat(roomId) {
     combat.active = true; combat.roomId = roomId; combat.rerollUsed = false;
     player.build.forEach(item => { if(item && item.id === 'item_pair') item.pairCount = 0; });
@@ -488,9 +512,12 @@ function resolveTurn() {
     combat.enemyHp -= dmgToEnemy;
     if (combat.enemyHp < 0) combat.enemyHp = 0;
     document.getElementById('enemy-hp').innerText = combat.enemyHp;
-    let log = `Ты бьешь на ${pAtk.total} (${pAtk.name}). Враг блокирует ${eDef.total}. Проходит ${dmgToEnemy}. `;
+    
+    let log = `Ты бьешь на ${pAtk.total} (${pAtk.name}${pAtk.logExtra}). Враг блокирует ${eDef.total}. Проходит ${dmgToEnemy}. `;
 
     if (combat.enemyHp <= 0) {
+        // ЖЕСТКО БЛОКИРУЕМ КНОПКИ, чтобы не было повторных вызовов
+        document.getElementById('btn-fight').style.display = 'none';
         log += `Враг разваливается! Победа!`;
         document.getElementById('combat-log').innerText = log;
         setTimeout(winCombat, 1500); return;
@@ -511,6 +538,7 @@ function resolveTurn() {
 }
 
 function winCombat() {
+    if (!combat.active) return; // Защита от двойного вызова!
     combat.active = false;
     player.defeatedEnemies.push(player.currentRoomId);
     
@@ -521,14 +549,14 @@ function winCombat() {
     if (brokenItemIndex !== -1) player.build[brokenItemIndex] = null;
 
     let rewardText = "";
+    // Возвращаем нормальные значения наград
     if (combat.roomId === 'enemy1') {
-        let coins = Math.floor(Math.random() * 3) + 1;
+        let coins = Math.floor(Math.random() * 3) + 1; // 1-3 монеты
         player.coins += coins; rewardText = `Вы победили скелета и нашли ${coins} монет(ы)!`;
     } else if (combat.roomId === 'enemy2') {
-        // Дропаем случайный билет
         const keys = Object.keys(allTickets);
         const randomKey = keys[Math.floor(Math.random() * keys.length)];
-        player.ticketsInventory.push({...allTickets[randomKey]});
+        player.ticketsInventory.push({...allTickets[randomKey]}); // Строго 1 билет
         rewardText = `Вы победили защитника и нашли Билет: ${allTickets[randomKey].name}!`;
     } else {
         rewardText = `Вы победили Босса!`;
