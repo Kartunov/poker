@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест Покера (Математика)</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            user-select: none;
+        }
+        .dice-pool {
+            display: flex;
+            gap: 10px;
+            margin: 30px 0;
+        }
+        .die {
+            width: 60px;
+            height: 60px;
+            background: #e0e0e0;
+            color: #121212;
+            font-size: 32px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .die.held {
+            background: #ffeb3b;
+            color: #121212;
+            transform: translateY(-10px);
+            box-shadow: 0 10px 15px rgba(255, 235, 59, 0.3);
+            border: 2px solid #fff;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: background 0.2s;
+        }
+        button:hover { background: #45a049; }
+        .result {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            text-align: center;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid #333;
+        }
+        .result p { margin: 8px 0; font-size: 16px; }
+        .combo-name { color: #2196F3; font-weight: bold; font-size: 24px; text-transform: uppercase; }
+        .total { color: #ffeb3b; font-weight: bold; font-size: 28px; }
+        .formula { font-size: 14px; color: #888; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Тест Ядра Покера</h1>
+    <p style="color: #888; text-align: center; max-width: 400px;">
+        Кликни по кубику, чтобы <b>оставить</b> его (он подсветится желтым). Остальные перебросятся.
+    </p>
+    
+    <div class="dice-pool" id="dice-pool"></div>
+    <button onclick="rollDice()">Бросить кубики</button>
+
+    <div class="result" id="result">
+        <p>Нажмите "Бросить"</p>
+    </div>
+
+    <script>
+        let dice = [1, 1, 1, 1, 1];
+        let holds = [false, false, false, false, false];
+
+        function renderDice() {
+            const pool = document.getElementById('dice-pool');
+            pool.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const die = document.createElement('div');
+                die.className = 'die';
+                if (holds[i]) die.classList.add('held');
+                die.innerText = dice[i];
+                die.onclick = () => toggleHold(i);
+                pool.appendChild(die);
+            }
+        }
+
+        function toggleHold(index) {
+            holds[index] = !holds[index];
+            renderDice();
+        }
+
+        function rollDice() {
+            for (let i = 0; i < 5; i++) {
+                if (!holds[i]) {
+                    dice[i] = Math.floor(Math.random() * 6) + 1;
+                }
+            }
+            renderDice();
+            calculateResult();
+        }
+
+        function calculateResult() {
+            // 1. Считаем сколько раз выпало каждое число
+            let counts = {};
+            dice.forEach(d => counts[d] = (counts[d] || 0) + 1);
+            
+            let countsArray = Object.values(counts).sort((a, b) => b - a);
+            let values = Object.keys(counts).map(Number).sort((a, b) => a - b);
+            
+            let result = { name: 'Пустая', points: 0, diceSum: 0, total: 0 };
+
+            // Проверяем комбинации от старшей к младшей
+            if (countsArray[0] === 5) {
+                // ПОКЕР (5 одинаковых)
+                let val = values[0];
+                let sum = val * 5;
+                result = { name: 'Покер', points: 15, diceSum: sum, total: Math.ceil(sum / 2) + 15 };
+            } 
+            else if (countsArray[0] === 4) {
+                // КАРЕ (4 одинаковых)
+                let val = values.find(v => counts[v] === 4);
+                let sum = val * 4; // Мусорная кость не считается
+                result = { name: 'Каре', points: 13, diceSum: sum, total: Math.ceil(sum / 2) + 13 };
+            }
+            else if (countsArray[0] === 3 && countsArray[1] === 2) {
+                // ФУЛЛ-ХАУС (3 + 2)
+                let sum = dice.reduce((a, b) => a + b, 0); // Суммируются все 5
+                result = { name: 'Фулл-хаус', points: 8, diceSum: sum, total: Math.ceil(sum / 2) + 8 };
+            }
+            else if (values.length === 5 && values[4] - values[0] === 4) {
+                // СТРИТ (5 подряд: 12345 или 23456)
+                let sum = dice.reduce((a, b) => a + b, 0); // Суммируются все 5
+                result = { name: 'Стрит', points: 10, diceSum: sum, total: Math.ceil(sum / 2) + 10 };
+            }
+            else if (countsArray[0] === 3) {
+                // СЕТ (3 одинаковых)
+                let val = values.find(v => counts[v] === 3);
+                let sum = val * 3;
+                result = { name: 'Сет', points: 6, diceSum: sum, total: Math.ceil(sum / 2) + 6 };
+            }
+            else if (countsArray[0] === 2 && countsArray[1] === 2) {
+                // ДВЕ ПАРЫ
+                let sum = 0;
+                values.forEach(v => {
+                    if (counts[v] === 2) sum += v * 2;
+                });
+                result = { name: 'Две пары', points: 4, diceSum: sum, total: Math.ceil(sum / 2) + 4 };
+            }
+            else if (countsArray[0] === 2) {
+                // ПАРА
+                let val = values.find(v => counts[v] === 2);
+                let sum = val * 2;
+                result = { name: 'Пара', points: 2, diceSum: sum, total: Math.ceil(sum / 2) + 2 };
+            }
+
+            // Выводим результат на экран
+            document.getElementById('result').innerHTML = `
+                <p class="combo-name">${result.name}</p>
+                <p>Сумма подходящих кубиков: <b>${result.diceSum}</b></p>
+                <p>Баллы за комбинацию: <b>+${result.points}</b></p>
+                <p class="formula">Формула: (${result.diceSum} / 2) + ${result.points} = ${result.total}</p>
+                <p class="total">Итого: ${result.total}</p>
+            `;
+        }
+
+        // Первый рендер
+        renderDice();
+    </script>
+</body>
+</html>
