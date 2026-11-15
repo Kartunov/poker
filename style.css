@@ -8,137 +8,56 @@
     --blue: #2196F3;
     --purple: #9C27B0;
     --red: #F44336;
-    --room-size: 70px; /* Размер клетки */
-    --gap: 10px;       /* Расстояние между клетками */
+    --room-size: 60px;
+    --gap: 10px;
 }
 
-* {
-    box-sizing: border-box;
-    user-select: none;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+* { box-sizing: border-box; user-select: none; font-family: 'Segoe UI', sans-serif; }
+body { margin: 0; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; height: 100vh; overflow: hidden; }
+#app { display: flex; flex-direction: column; width: 100%; max-width: 400px; height: 100%; }
 
-body {
-    margin: 0;
-    padding: 0;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    display: flex;
-    justify-content: center;
-    height: 100vh;
-    overflow: hidden;
-}
+/* ---------------- КАРТА ---------------- */
+#map-screen { display: flex; flex-direction: column; height: 100%; padding: 15px; }
+#top-bar { display: flex; justify-content: space-between; background: var(--panel-bg); padding: 15px; border-radius: 10px; font-size: 18px; font-weight: bold; margin-bottom: 20px; }
+#map-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; }
+#map-grid { display: grid; grid-template-columns: repeat(3, var(--room-size)); grid-template-rows: repeat(4, var(--room-size)); gap: var(--gap); }
 
-#app {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 400px; /* Ограничим ширину для телефонов */
-    height: 100%;
-    padding: 20px;
-}
+.room { width: var(--room-size); height: var(--room-size); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 24px; border: 2px solid transparent; opacity: 0.2; cursor: not-allowed; }
+.room.green { background-color: var(--green); } .room.grey { background-color: var(--grey); }
+.room.yellow { background-color: var(--yellow); color: #000; } .room.blue { background-color: var(--blue); }
+.room.purple { background-color: var(--purple); } .room.red { background-color: var(--red); }
+.room.visited { opacity: 1; }
+.room.available { opacity: 1; border-color: white; cursor: pointer; animation: pulse 1.5s infinite; }
+.room.current { border-color: white; box-shadow: 0 0 15px white; opacity: 1; cursor: default; }
+.room.locked { opacity: 0.5; cursor: not-allowed; border-color: red; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
 
-/* Верхняя панель */
-#top-bar {
-    display: flex;
-    justify-content: space-between;
-    background: var(--panel-bg);
-    padding: 15px;
-    border-radius: 10px;
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-}
+#bottom-bar { background: var(--panel-bg); padding: 20px; border-radius: 10px; margin-top: 20px; text-align: center; min-height: 80px; display: flex; align-items: center; justify-content: center; }
 
-/* Контейнер карты */
-#map-container {
-    flex-grow: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+/* ---------------- БОЙ ---------------- */
+#combat-screen { display: flex; flex-direction: column; height: 100%; padding: 15px; background: #0a0a0a; }
+.enemy-section { background: #1a1a1a; padding: 15px; border-radius: 10px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; }
+.enemy-info { display: flex; justify-content: space-between; width: 100%; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+.hp-text { color: #F44336; }
 
-/* Сама сетка (крест) */
-#map-grid {
-    display: grid;
-    grid-template-columns: repeat(3, var(--room-size));
-    grid-template-rows: repeat(4, var(--room-size));
-    gap: var(--gap);
-}
+#combat-log { text-align: center; margin: 15px 0; font-size: 14px; color: #aaa; min-height: 40px; line-height: 1.4; }
 
-/* Комнаты */
-.room {
-    width: var(--room-size);
-    height: var(--room-size);
-    border-radius: 12px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    border: 2px solid transparent;
-    transition: all 0.2s ease;
-    opacity: 0.2; /* Туман войны по умолчанию */
-    cursor: not-allowed;
-}
+.player-section { margin-top: auto; background: #1a1a1a; padding: 15px; border-radius: 10px; border: 1px solid #333; }
+.hp-bar-container { position: relative; width: 100%; height: 20px; background: #333; border-radius: 10px; margin-bottom: 15px; overflow: hidden; }
+.hp-bar { height: 100%; background: #4CAF50; transition: width 0.3s ease; }
+.hp-label { position: absolute; top: 0; left: 0; width: 100%; text-align: center; font-size: 12px; line-height: 20px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; }
 
-/* Стили цветов */
-.room.green { background-color: var(--green); }
-.room.grey { background-color: var(--grey); }
-.room.yellow { background-color: var(--yellow); color: #000; }
-.room.blue { background-color: var(--blue); }
-.room.purple { background-color: var(--purple); }
-.room.red { background-color: var(--red); }
+.hand-section { margin-bottom: 10px; }
+.hand-title { font-size: 14px; font-weight: bold; margin-bottom: 5px; color: #888; }
+.dice-pool { display: flex; gap: 8px; justify-content: center; margin-bottom: 5px; }
+.die { width: 45px; height: 45px; background: #e0e0e0; color: #121212; font-size: 24px; font-weight: bold; display: flex; justify-content: center; align-items: center; border-radius: 8px; cursor: pointer; transition: transform 0.1s; box-shadow: 0 3px 5px rgba(0,0,0,0.5); }
+.die.held { background: #ffeb3b; transform: translateY(-5px); border: 2px solid #fff; }
+.die.enemy { cursor: default; background: #cfcfcf; }
 
-/* Посещенные комнаты */
-.room.visited {
-    opacity: 1;
-}
+.btn-reroll { width: 100%; padding: 8px; background: #444; color: white; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; }
+.btn-reroll:active:not(:disabled) { background: #666; }
+.btn-reroll:disabled { opacity: 0.3; cursor: not-allowed; }
 
-/* Доступные для перехода комнаты (соседние) */
-.room.available {
-    opacity: 1;
-    border-color: white;
-    cursor: pointer;
-    animation: pulse 1.5s infinite;
-}
-
-.room.available:hover {
-    transform: scale(1.05);
-}
-
-/* Заблокированные (по условиям игры) */
-.room.locked {
-    opacity: 0.5;
-    cursor: not-allowed;
-    border-color: red; /* Можно убрать, это для дебага */
-}
-
-/* Текущая комната (где стоит игрок) */
-.room.current {
-    border-color: white;
-    box-shadow: 0 0 15px white;
-    opacity: 1;
-    cursor: default;
-}
-
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-}
-
-/* Нижняя панель */
-#bottom-bar {
-    background: var(--panel-bg);
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 20px;
-    text-align: center;
-    font-size: 16px;
-    box-shadow: 0 -4px 6px rgba(0,0,0,0.3);
-    min-height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+.action-buttons { margin-top: 15px; display: flex; gap: 10px; }
+.btn-main { flex: 1; padding: 15px; font-size: 18px; font-weight: bold; color: white; background: #4CAF50; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+.btn-main:active { background: #45a049; transform: translateY(2px); }
