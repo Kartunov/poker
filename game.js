@@ -1,10 +1,10 @@
 const rooms = {
     'event':    { id: 'event',    x: 1, y: 0, type: 'event',    color: 'purple', icon: '',   text: 'Тут будет событие.' },
     'boss':     { id: 'boss',     x: 2, y: 0, type: 'boss',     color: 'red',    icon: '💀', text: 'Тут сидит БОСС.' },
-    'enemy2':   { id: 'enemy2',   x: 1, y: 1, type: 'enemy',    color: 'grey',   icon: '',   text: 'Второй скелет. Сначала посети сокровищницу и магазин!' },
-    'treasury': { id: 'treasury', x: 0, y: 2, type: 'treasury', color: 'yellow', icon: '👑', text: 'Сокровищница. Тут дают предмет.' },
-    'enemy1':   { id: 'enemy1',   x: 1, y: 2, type: 'enemy',    color: 'grey',   icon: '',   text: 'Первый скелет. Тут будет бой.' },
-    'shop':     { id: 'shop',     x: 2, y: 2, type: 'shop',     color: 'blue',   icon: '💰', text: 'Магазин. Тут можно купить билет.' },
+    'enemy2':   { id: 'enemy2',   x: 1, y: 1, type: 'enemy',    color: 'grey',   icon: '',   text: 'Второй скелет.' },
+    'treasury': { id: 'treasury', x: 0, y: 2, type: 'treasury', color: 'yellow', icon: '👑', text: 'Сокровищница.' },
+    'enemy1':   { id: 'enemy1',   x: 1, y: 2, type: 'enemy',    color: 'grey',   icon: '',   text: 'Первый скелет.' },
+    'shop':     { id: 'shop',     x: 2, y: 2, type: 'shop',     color: 'blue',   icon: '💰', text: 'Магазин.' },
     'start':    { id: 'start',    x: 1, y: 3, type: 'start',    color: 'green',  icon: '',   text: 'Стартовая комната.' }
 };
 
@@ -14,28 +14,126 @@ const connections = {
     'enemy2':   ['enemy1', 'event'], 'event': ['enemy2', 'boss'], 'boss': ['event']
 };
 
-let player = { hp: 50, maxHp: 50, coins: 3, tickets: 0, currentRoomId: 'start', visitedRooms: ['start'], defeatedEnemies: [] };
+// Все доступные предметы в обучении (из твоего документа)
+const allItems = {
+    'item_pair': {
+        id: 'item_pair', name: 'Пара-бустер', icon: '👯',
+        desc: 'Увеличивает очки комбинации "Пара" на 2, а также на +1 за каждую сыгранную пару в этом бою.',
+        type: 'passive', pairBonus: 2, pairCount: 0
+    },
+    'item_flat5': {
+        id: 'item_flat5', name: 'Стеклянный козырь', icon: '💎',
+        desc: 'Увеличивает приносимые очки на 5. Но с шансом 1 к 6 может сломаться после сражения.',
+        type: 'passive', flatBonus: 5
+    },
+    'item_high': {
+        id: 'item_high', name: 'Старший козырь', icon: '👑',
+        desc: 'Добавляет к сумме очков старшую кость, не попавшую в комбинацию, если она есть.',
+        type: 'passive', highBonus: true
+    }
+};
 
-// --- БОЕВАЯ СИСТЕМА ---
+let player = { 
+    hp: 50, maxHp: 50, coins: 3, tickets: 0, currentRoomId: 'start', visitedRooms: ['start'], defeatedEnemies: [],
+    inventory: [], // Предметы в сумке
+    build: [null, null, null, null, null] // Экипированные предметы (макс 5)
+};
+
 let combat = {
-    active: false,
-    roomId: '',
-    enemyName: 'Скелет',
-    enemyHp: 20,
-    enemyMaxHp: 20,
-    enemyHasDef: false,
+    active: false, roomId: '', enemyName: 'Скелет', enemyHp: 20, enemyMaxHp: 20, enemyHasDef: false,
     dice: { enemyAtk: [], enemyDef: [], pAtk: [], pDef: [] },
     holds: { pAtk: [false,false,false,false,false], pDef: [false,false,false,false,false] },
     rerollUsed: false
 };
 
-function getCombo(diceArray) {
+// --- ИНВЕНТАРЬ ---
+function toggleInventory() {
+    const inv = document.getElementById('inventory-screen');
+    const map = document.getElementById('map-screen');
+    if (inv.style.display === 'none') {
+        inv.style.display = 'flex';
+        map.style.display = 'none';
+        renderInventory();
+    } else {
+        inv.style.display = 'none';
+        map.style.display = 'flex';
+        updateUI();
+    }
+}
+
+function renderInventory() {
+    // Рендер слотов билда
+    const buildSlots = document.getElementById('build-slots');
+    buildSlots.innerHTML = '';
+    player.build.forEach((item, index) => {
+        const slot = document.createElement('div');
+        slot.className = 'build-slot' + (item ? ' filled' : '');
+        if (item) {
+            slot.innerHTML = `<span style="font-size:20px">${item.icon}</span><br>${item.name}`;
+            slot.onclick = () => unequipItem(index);
+        } else {
+            slot.innerHTML = 'Пусто';
+        }
+        buildSlots.appendChild(slot);
+    });
+
+    // Рендер сумки
+    const invList = document.getElementById('inventory-list');
+    invList.innerHTML = '';
+    if (player.inventory.length === 0) {
+        invList.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color:#666;">Сумка пуста</div>';
+    }
+    player.inventory.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'inv-item';
+        el.innerHTML = `<div class="icon">${item.icon}</div><b>${item.name}</b>`;
+        el.onclick = () => equipItem(item);
+        invList.appendChild(el);
+    });
+}
+
+function equipItem(item) {
+    const emptyIndex = player.build.indexOf(null);
+    if (emptyIndex !== -1) {
+        player.build[emptyIndex] = item;
+        player.inventory = player.inventory.filter(i => i.id !== item.id);
+        renderInventory();
+    } else {
+        alert("Билд заполнен! Убери что-нибудь.");
+    }
+}
+
+function unequipItem(index) {
+    const item = player.build[index];
+    if (item) {
+        player.inventory.push(item);
+        player.build[index] = null;
+        renderInventory();
+    }
+}
+
+function updateCombatBuildDisplay() {
+    const display = document.getElementById('combat-build-display');
+    display.innerHTML = '';
+    player.build.forEach(item => {
+        if (item) {
+            const el = document.createElement('div');
+            el.className = 'combat-build-item';
+            el.innerText = item.icon;
+            el.title = item.name;
+            display.appendChild(el);
+        }
+    });
+}
+
+// --- МАТЕМАТИКА С УЧЕТОМ ПРЕДМЕТОВ ---
+function getCombo(diceArray, isPlayer = false) {
     if (!diceArray || diceArray.length === 0) return { name: 'Пустая', total: 0 };
     
     let counts = {}; diceArray.forEach(d => counts[d] = (counts[d] || 0) + 1);
     let countsArray = Object.values(counts).sort((a, b) => b - a);
     let values = Object.keys(counts).map(Number).sort((a, b) => a - b);
-    let sum = 0, points = 0, name = 'Пустая';
+    let sum = 0, points = 0, name = 'Пустая', isPair = false;
 
     if (countsArray[0] === 5) { let v = values[0]; sum = v * 5; points = 15; name = 'Покер'; }
     else if (countsArray[0] === 4) { let v = values.find(v => counts[v] === 4); sum = v * 4; points = 13; name = 'Каре'; }
@@ -43,9 +141,51 @@ function getCombo(diceArray) {
     else if (values.length === 5 && values[4] - values[0] === 4) { sum = diceArray.reduce((a, b) => a + b, 0); points = 10; name = 'Стрит'; }
     else if (countsArray[0] === 3) { let v = values.find(v => counts[v] === 3); sum = v * 3; points = 6; name = 'Сет'; }
     else if (countsArray[0] === 2 && countsArray[1] === 2) { values.forEach(v => { if (counts[v] === 2) sum += v * 2; }); points = 4; name = 'Две пары'; }
-    else if (countsArray[0] === 2) { let v = values.find(v => counts[v] === 2); sum = v * 2; points = 2; name = 'Пара'; }
+    else if (countsArray[0] === 2) { let v = values.find(v => counts[v] === 2); sum = v * 2; points = 2; name = 'Пара'; isPair = true; }
 
-    return { name, total: Math.ceil(sum / 2) + points };
+    let extraPoints = 0;
+    let extraSum = 0;
+
+    // Применяем эффекты билда игрока
+    if (isPlayer) {
+        player.build.forEach(item => {
+            if (!item) return;
+            
+            // Предмет 1: Пара-бустер
+            if (item.id === 'item_pair' && isPair) {
+                extraPoints += item.pairBonus;
+            }
+            // Предмет 2: Плоские +5
+            if (item.id === 'item_flat5') {
+                extraPoints += item.flatBonus;
+            }
+            // Предмет 3: Старшая кость вне комбинации
+            if (item.id === 'item_high') {
+                // Ищем кости, которые НЕ входят в комбинацию
+                let usedDiceCounts = {...counts};
+                // Удаляем те, что в комбинации
+                if (name === 'Пара') { let v = values.find(v => counts[v] === 2); usedDiceCounts[v] -= 2; }
+                else if (name === 'Сет') { let v = values.find(v => counts[v] === 3); usedDiceCounts[v] -= 3; }
+                else if (name === 'Две пары') { values.forEach(v => { if (counts[v] === 2) usedDiceCounts[v] -= 2; }); }
+                
+                // Оставшиеся кости - мусор
+                let remainingDice = [];
+                for (let v in usedDiceCounts) {
+                    for (let i=0; i<usedDiceCounts[v]; i++) remainingDice.push(Number(v));
+                }
+                if (remainingDice.length > 0) {
+                    let highest = Math.max(...remainingDice);
+                    extraSum += highest;
+                }
+            }
+        });
+    }
+
+    return { 
+        name, 
+        total: Math.ceil((sum + extraSum) / 2) + points + extraPoints,
+        isPair // Возвращаем флаг, чтобы потом обновлять счетчик
+    };
 }
 
 function initGame() { createMapGrid(); updateUI(); }
@@ -77,7 +217,12 @@ function tryMoveTo(targetRoomId) {
         player.currentRoomId = targetRoomId;
         if (!player.visitedRooms.includes(targetRoomId)) player.visitedRooms.push(targetRoomId);
         
-        // Если в комнате есть враг и он еще не побежден
+        if (rooms[targetRoomId].type === 'treasury' && !player.defeatedEnemies.includes('treasury_looted')) {
+            player.defeatedEnemies.push('treasury_looted');
+            giveRandomItem();
+            return;
+        }
+
         if ((rooms[targetRoomId].type === 'enemy' || rooms[targetRoomId].type === 'boss') && !player.defeatedEnemies.includes(targetRoomId)) {
             startCombat(targetRoomId);
         } else {
@@ -85,6 +230,16 @@ function tryMoveTo(targetRoomId) {
             showText(rooms[targetRoomId].text);
         }
     }
+}
+
+function giveRandomItem() {
+    const keys = Object.keys(allItems);
+    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+    const item = { ...allItems[randomKey] }; // Копируем объект
+    
+    player.inventory.push(item);
+    updateUI();
+    showText(`Вы нашли предмет: ${item.name}! (Откройте 🎒, чтобы надеть его).\n${item.desc}`);
 }
 
 function updateUI() {
@@ -111,25 +266,22 @@ function showText(text) { document.getElementById('room-text').innerText = text;
 
 // --- БОЙ ---
 function startCombat(roomId) {
-    combat.active = true; combat.roomId = roomId;
-    combat.rerollUsed = false;
+    combat.active = true; combat.roomId = roomId; combat.rerollUsed = false;
+    
+    // Сброс временных счетчиков пар для предмета
+    player.build.forEach(item => { if(item && item.id === 'item_pair') item.pairCount = 0; });
 
-    // Настройка врага в зависимости от комнаты
     if (roomId === 'enemy1') {
-        combat.enemyName = '💀 Скелет-Атакер';
-        combat.enemyHp = 20; combat.enemyMaxHp = 20; combat.enemyHasDef = false;
+        combat.enemyName = '💀 Скелет-Атакер'; combat.enemyHp = 20; combat.enemyMaxHp = 20; combat.enemyHasDef = false;
     } else if (roomId === 'enemy2') {
-        combat.enemyName = '💀 Скелет-Защитник';
-        combat.enemyHp = 25; combat.enemyMaxHp = 25; combat.enemyHasDef = true;
+        combat.enemyName = '💀 Скелет-Защитник'; combat.enemyHp = 25; combat.enemyMaxHp = 25; combat.enemyHasDef = true;
     } else if (roomId === 'boss') {
-        combat.enemyName = '👑 Босс-Скелет';
-        combat.enemyHp = 30; combat.enemyMaxHp = 30; combat.enemyHasDef = true;
+        combat.enemyName = '👑 Босс-Скелет'; combat.enemyHp = 30; combat.enemyMaxHp = 30; combat.enemyHasDef = true;
     }
 
     document.getElementById('enemy-name').innerText = combat.enemyName;
     document.getElementById('enemy-hp').innerText = combat.enemyHp;
     document.getElementById('enemy-max-hp').innerText = combat.enemyMaxHp;
-    
     document.getElementById('enemy-def-container').style.display = combat.enemyHasDef ? 'block' : 'none';
 
     document.getElementById('map-screen').style.display = 'none';
@@ -141,16 +293,14 @@ function startCombat(roomId) {
     document.getElementById('btn-fight').style.display = 'none';
     document.getElementById('combat-log').innerText = `${combat.enemyName} готовится к бою...`;
     
+    updateCombatBuildDisplay();
     resetDice();
     renderCombatDice();
     updatePreviews();
 }
 
 function rollDiceArray() { return [1,1,1,1,1].map(() => Math.floor(Math.random() * 6) + 1); }
-
-function resetDice() {
-    combat.dice = { enemyAtk: [1,1,1,1,1], enemyDef: [1,1,1,1,1], pAtk: [1,1,1,1,1], pDef: [1,1,1,1,1] };
-}
+function resetDice() { combat.dice = { enemyAtk: [1,1,1,1,1], enemyDef: [1,1,1,1,1], pAtk: [1,1,1,1,1], pDef: [1,1,1,1,1] }; }
 
 function startTurn() {
     combat.dice.enemyAtk = rollDiceArray();
@@ -195,18 +345,25 @@ function reroll(type) {
 }
 
 function resolveTurn() {
-    let pAtk = getCombo(combat.dice.pAtk);
-    let pDef = getCombo(combat.dice.pDef);
-    let eAtk = getCombo(combat.dice.enemyAtk);
-    let eDef = combat.enemyHasDef ? getCombo(combat.dice.enemyDef) : { total: 0 };
+    let pAtk = getCombo(combat.dice.pAtk, true); // Передаем true для учета билда
+    let pDef = getCombo(combat.dice.pDef, true);
+    let eAtk = getCombo(combat.dice.enemyAtk, false);
+    let eDef = combat.enemyHasDef ? getCombo(combat.dice.enemyDef, false) : { total: 0 };
 
-    // Урон по врагу (учитываем его защиту)
+    // Логика Пара-бустера
+    player.build.forEach(item => {
+        if (item && item.id === 'item_pair' && pAtk.isPair) {
+            item.pairCount++;
+            item.pairBonus++; // Увеличиваем бонус на 1 в следующий раз
+        }
+    });
+
     let dmgToEnemy = Math.max(0, pAtk.total - eDef.total);
     combat.enemyHp -= dmgToEnemy;
     if (combat.enemyHp < 0) combat.enemyHp = 0;
     document.getElementById('enemy-hp').innerText = combat.enemyHp;
 
-    let log = `Ты бьешь на ${pAtk.total} (${pAtk.name}). Враг блокирует ${eDef.total}. Проходит ${dmgToEnemy} урона. `;
+    let log = `Ты бьешь на ${pAtk.total} (${pAtk.name}). Враг блокирует ${eDef.total}. Проходит ${dmgToEnemy}. `;
 
     if (combat.enemyHp <= 0) {
         log += `Враг разваливается! Победа!`;
@@ -215,15 +372,14 @@ function resolveTurn() {
         return;
     }
 
-    // Урон по игроку
     let dmgToPlayer = Math.max(0, eAtk.total - pDef.total);
     player.hp -= dmgToPlayer;
-    if (player.hp < 1) player.hp = 1; // Божественное вмешательство
+    if (player.hp < 1) player.hp = 1;
 
     document.getElementById('player-hp').innerText = player.hp;
     document.getElementById('player-hp-bar').style.width = (player.hp / player.maxHp * 100) + '%';
     
-    log += `Враг бьет на ${eAtk.total}. Твоя защита ${pDef.total} (${pDef.name}). Ты получаешь ${dmgToPlayer} урона.`;
+    log += `Враг бьет на ${eAtk.total}. Твоя защита ${pDef.total}. Ты получаешь ${dmgToPlayer}.`;
     document.getElementById('combat-log').innerText = log;
 
     document.getElementById('btn-fight').style.display = 'none';
@@ -235,7 +391,18 @@ function winCombat() {
     combat.active = false;
     player.defeatedEnemies.push(player.currentRoomId);
     
-    // Награды за разных врагов
+    // Проверка на поломку предмета (Стеклянный козырь)
+    let brokenItemIndex = -1;
+    player.build.forEach((item, index) => {
+        if (item && item.id === 'item_flat5' && Math.floor(Math.random() * 6) === 0) {
+            brokenItemIndex = index;
+        }
+    });
+    if (brokenItemIndex !== -1) {
+        player.build[brokenItemIndex] = null;
+        showText("💎 Ваш Стеклянный козырь сломался от перенапряжения!");
+    }
+
     let rewardText = "";
     if (combat.roomId === 'enemy1') {
         let coins = Math.floor(Math.random() * 3) + 1;
@@ -251,7 +418,7 @@ function winCombat() {
     document.getElementById('map-screen').style.display = 'flex';
     document.getElementById('combat-screen').style.display = 'none';
     updateUI();
-    showText(rewardText);
+    if (brokenItemIndex === -1) showText(rewardText);
 }
 
 function renderCombatDice() {
@@ -278,11 +445,11 @@ function renderCombatDice() {
 }
 
 function updatePreviews() {
-    document.getElementById('preview-atk').innerText = getCombo(combat.dice.pAtk).total;
-    document.getElementById('preview-def').innerText = getCombo(combat.dice.pDef).total;
-    document.getElementById('enemy-atk-total').innerText = getCombo(combat.dice.enemyAtk).total;
+    document.getElementById('preview-atk').innerText = getCombo(combat.dice.pAtk, true).total;
+    document.getElementById('preview-def').innerText = getCombo(combat.dice.pDef, true).total;
+    document.getElementById('enemy-atk-total').innerText = getCombo(combat.dice.enemyAtk, false).total;
     if (combat.enemyHasDef) {
-        document.getElementById('enemy-def-total').innerText = getCombo(combat.dice.enemyDef).total;
+        document.getElementById('enemy-def-total').innerText = getCombo(combat.dice.enemyDef, false).total;
     }
 }
 
