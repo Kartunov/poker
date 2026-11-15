@@ -12,13 +12,30 @@
         <div id="map-screen">
             <header id="top-bar">
                 <div class="stat">❤️ HP: <span id="ui-hp">50</span>/50</div>
-                <div class="stat">💰 Монеты: <span id="ui-coins">3</span></div>
-                <div class="stat">🎟️ Билеты: <span id="ui-tickets">0</span></div>
+                <div class="stat">💰 <span id="ui-coins">3</span></div>
+                <div class="stat">🎟️ <span id="ui-tickets">0</span></div>
+                <button id="btn-inventory" onclick="toggleInventory()">🎒</button>
             </header>
             <main id="map-container"></main>
             <footer id="bottom-bar">
                 <div id="room-text">Добро пожаловать. Выберите, куда пойти.</div>
             </footer>
+        </div>
+
+        <!-- ================= ЭКРАН ИНВЕНТАРЯ ================= -->
+        <div id="inventory-screen" style="display: none;">
+            <div class="inv-header">
+                <h2>Твой Билд (Макс 5)</h2>
+                <button class="btn-close" onclick="toggleInventory()">✖ Закрыть</button>
+            </div>
+            <div class="build-slots" id="build-slots">
+                <!-- Слоты билда будут тут -->
+            </div>
+            
+            <h2>Инвентарь (Сумка)</h2>
+            <div class="inventory-list" id="inventory-list">
+                <!-- Предметы в сумке будут тут -->
+            </div>
         </div>
 
         <!-- ================= ЭКРАН БОЯ ================= -->
@@ -51,6 +68,9 @@
                     <span class="hp-label">Ты (HP: <span id="player-hp">50</span>/50)</span>
                 </div>
                 
+                <!-- Мини-отображение билда в бою -->
+                <div class="combat-build-display" id="combat-build-display"></div>
+
                 <div class="hand-section">
                     <div class="hand-title">⚔️ Твоя Атака: <span id="preview-atk" class="preview-text">0</span></div>
                     <div class="dice-pool player-dice" id="player-atk-dice"></div>
