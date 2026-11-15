@@ -9,13 +9,13 @@ const rooms = {
     'start':    { id: 'start',    x: 1, y: 3, type: 'start',    color: 'green',  icon: '',   text: 'Стартовая комната. Добро пожаловать.' }
 };
 
-// Связи между комнатами (кто с кем граничит)
+// ИСПРАВЛЕННЫЕ СВЯЗИ (без диагоналей, через центр)
 const connections = {
     'start':    ['enemy1'],
-    'enemy1':   ['start', 'treasury', 'shop'],
-    'treasury': ['enemy1', 'enemy2'],
-    'shop':     ['enemy1', 'enemy2'],
-    'enemy2':   ['treasury', 'shop', 'event'],
+    'enemy1':   ['start', 'treasury', 'shop', 'enemy2'], // Теперь из центра можно пойти куда угодно
+    'treasury': ['enemy1'],                              // Из желтой только назад в центр
+    'shop':     ['enemy1'],                              // Из синей только назад в центр
+    'enemy2':   ['enemy1', 'event'],                     // Из верхней серой вниз и наверх
     'event':    ['enemy2', 'boss'],
     'boss':     ['event']
 };
@@ -36,39 +36,28 @@ function initGame() {
 
 function createMapGrid() {
     const container = document.getElementById('map-container');
-    
-    // Создаем сетку
     const grid = document.createElement('div');
     grid.id = 'map-grid';
 
-    // Проходимся по всем комнатам и расставляем их по координатам
     Object.values(rooms).forEach(room => {
         const roomDiv = document.createElement('div');
         roomDiv.id = `room-${room.id}`;
         roomDiv.className = `room ${room.color}`;
         roomDiv.innerHTML = room.icon;
-        
-        // Позиционирование в Grid (1-based index)
         roomDiv.style.gridColumn = room.x + 1;
         roomDiv.style.gridRow = room.y + 1;
-
-        // Клик по комнате
         roomDiv.onclick = () => tryMoveTo(room.id);
-
         grid.appendChild(roomDiv);
     });
 
     container.appendChild(grid);
 }
 
-// Проверка, можно ли перейти в комнату
 function canMoveTo(targetRoomId) {
     if (targetRoomId === player.currentRoomId) return false;
-
-    // 1. Проверяем, есть ли вообще проход
     if (!connections[player.currentRoomId].includes(targetRoomId)) return false;
 
-    // 2. Особые условия (Гейт для второй комнаты с врагом)
+    // Гейт для второй комнаты с врагом
     if (targetRoomId === 'enemy2') {
         const visitedTreasury = player.visitedRooms.includes('treasury');
         const visitedShop = player.visitedRooms.includes('shop');
@@ -81,38 +70,30 @@ function canMoveTo(targetRoomId) {
     return true;
 }
 
-// Попытка перехода
 function tryMoveTo(targetRoomId) {
     if (canMoveTo(targetRoomId)) {
         player.currentRoomId = targetRoomId;
-        
-        // Добавляем в посещенные, если еще не были
         if (!player.visitedRooms.includes(targetRoomId)) {
             player.visitedRooms.push(targetRoomId);
         }
-        
         updateUI();
         showText(rooms[targetRoomId].text);
     }
 }
 
-// Обновление визуала
 function updateUI() {
-    // Обновляем цифры
     document.getElementById('ui-hp').innerText = player.hp;
     document.getElementById('ui-coins').innerText = player.coins;
 
-    // Обновляем комнаты
     Object.keys(rooms).forEach(id => {
         const el = document.getElementById(`room-${id}`);
-        el.className = `room ${rooms[id].color}`; // Сброс классов
+        el.className = `room ${rooms[id].color}`; 
         el.innerHTML = rooms[id].icon;
 
         const isCurrent = id === player.currentRoomId;
         const isVisited = player.visitedRooms.includes(id);
         const isAvailable = connections[player.currentRoomId].includes(id);
         
-        // Проверяем блокировку (например, enemy2)
         let isLocked = false;
         if (id === 'enemy2' && (!player.visitedRooms.includes('treasury') || !player.visitedRooms.includes('shop'))) {
             isLocked = true;
@@ -126,15 +107,13 @@ function updateUI() {
             el.classList.add('visited');
             if (isLocked) el.classList.add('locked');
         } else if (isLocked) {
-            el.classList.add('locked'); // Видно, но темно и с красной рамкой
+            el.classList.add('locked'); 
         }
     });
 }
 
-// Вывод текста в нижнюю панель
 function showText(text) {
     document.getElementById('room-text').innerText = text;
 }
 
-// Запуск игры после загрузки страницы
 window.onload = initGame;
