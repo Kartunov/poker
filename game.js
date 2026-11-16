@@ -31,18 +31,15 @@ const allTickets = {
 let player = { 
     hp: 50, maxHp: 50, coins: 3, currentRoomId: 'start', visitedRooms: ['start'], defeatedEnemies: [],
     inventory: [], build: [null, null, null, null, null],
-    ticketsInventory: [], 
-    piggyBank: 0, 
-    piggyBroken: false, 
-    shopStock: { ticketBought: false, itemBought: false } 
+    ticketsInventory: [], piggyBank: 0, piggyBroken: false, shopStock: { ticketBought: false, itemBought: false },
+    hideMapIcons: false // Флаг для события со свечой
 };
 
 let combat = {
     active: false, roomId: '', enemyName: 'Скелет', enemyHp: 20, enemyMaxHp: 20, enemyHasDef: false,
     dice: { enemyAtk: [], enemyDef: [], pAtk: [], pDef: [] },
     holds: { pAtk: [false,false,false,false,false], pDef: [false,false,false,false,false] },
-    rerollUsed: false,
-    selectedTicketIndex: null // Индекс выбранного билета для прицеливания
+    rerollUsed: false, selectedTicketIndex: null, bossMechanic: false, lockedDieIndex: -1
 };
 
 let currentLootItem = null; 
@@ -67,54 +64,39 @@ function toggleInventory() {
 }
 
 function renderInventory() {
-    const buildSlots = document.getElementById('build-slots');
-    buildSlots.innerHTML = '';
+    const buildSlots = document.getElementById('build-slots'); buildSlots.innerHTML = '';
     player.build.forEach((item, index) => {
         const slot = document.createElement('div');
         slot.className = 'build-slot' + (item ? ' filled' : '');
-        if (item) {
-            slot.innerHTML = `<span style="font-size:20px">${item.icon}</span><br>${item.name}`;
-            slot.onclick = () => unequipItem(index);
-        } else { slot.innerHTML = 'Пусто'; }
+        if (item) { slot.innerHTML = `<span style="font-size:20px">${item.icon}</span><br>${item.name}`; slot.onclick = () => unequipItem(index); } 
+        else { slot.innerHTML = 'Пусто'; }
         buildSlots.appendChild(slot);
     });
 
-    const invList = document.getElementById('inventory-list');
-    invList.innerHTML = '';
+    const invList = document.getElementById('inventory-list'); invList.innerHTML = '';
     if (player.inventory.length === 0) invList.innerHTML = '<div style="color:#666; text-align:center; padding:10px;">Пусто</div>';
     player.inventory.forEach(item => {
         const el = document.createElement('div');
         el.className = 'inv-item';
-        el.innerHTML = `<div class="inv-item-header"><span class="icon">${item.icon}</span><span>${item.name}</span></div>
-            <div class="inv-item-desc">${getDynamicDesc(item)}</div>`;
+        el.innerHTML = `<div class="inv-item-header"><span class="icon">${item.icon}</span><span>${item.name}</span></div><div class="inv-item-desc">${getDynamicDesc(item)}</div>`;
         el.onclick = () => equipItem(item);
         invList.appendChild(el);
     });
 
-    const ticketList = document.getElementById('ticket-list');
-    ticketList.innerHTML = '';
+    const ticketList = document.getElementById('ticket-list'); ticketList.innerHTML = '';
     if (player.ticketsInventory.length === 0) ticketList.innerHTML = '<div style="color:#666; text-align:center; padding:10px;">Нет билетов</div>';
-    player.ticketsInventory.forEach((tick, index) => {
+    player.ticketsInventory.forEach(tick => {
         const el = document.createElement('div');
         el.className = 'ticket-item';
-        el.innerHTML = `
-            <span class="ticket-icon">${tick.icon}</span>
-            <div class="ticket-info">
-                <span class="ticket-name">${tick.name}</span>
-                <span class="ticket-desc">${tick.desc}</span>
-            </div>
-        `;
+        el.innerHTML = `<span class="ticket-icon">${tick.icon}</span><div class="ticket-info"><span class="ticket-name">${tick.name}</span><span class="ticket-desc">${tick.desc}</span></div>`;
         ticketList.appendChild(el);
     });
 }
 
 function equipItem(item) {
     const emptyIndex = player.build.indexOf(null);
-    if (emptyIndex !== -1) {
-        player.build[emptyIndex] = item;
-        player.inventory = player.inventory.filter(i => i.id !== item.id);
-        renderInventory();
-    } else { alert("Билд заполнен!"); }
+    if (emptyIndex !== -1) { player.build[emptyIndex] = item; player.inventory = player.inventory.filter(i => i.id !== item.id); renderInventory(); } 
+    else { alert("Билд заполнен!"); }
 }
 
 function unequipItem(index) {
@@ -128,7 +110,6 @@ function openShop() {
     document.getElementById('shop-screen').style.display = 'flex';
     renderShop();
 }
-
 function closeShop() {
     document.getElementById('shop-screen').style.display = 'none';
     document.getElementById('map-screen').style.display = 'flex';
@@ -136,112 +117,39 @@ function closeShop() {
 }
 
 function renderShop() {
-    const shopContainer = document.getElementById('shop-items');
-    shopContainer.innerHTML = '';
-
+    const shopContainer = document.getElementById('shop-items'); shopContainer.innerHTML = '';
     if (!player.shopStock.ticketBought) {
-        const ticketEl = document.createElement('div');
-        ticketEl.className = 'shop-item';
-        ticketEl.innerHTML = `
-            <div class="shop-item-info">
-                <div class="shop-item-title">🎟️ Случайный билет</div>
-                <div class="shop-item-desc">Разовый расходник.</div>
-            </div>
-            <button class="btn-buy" onclick="buyTicket()">Купить <span>3 💰</span></button>
-        `;
-        shopContainer.appendChild(ticketEl);
+        shopContainer.innerHTML += `<div class="shop-item"><div class="shop-item-info"><div class="shop-item-title">🎟️ Случайный билет</div><div class="shop-item-desc">Разовый расходник.</div></div><button class="btn-buy" onclick="buyTicket()">Купить <span>3 💰</span></button></div>`;
     }
-
     if (!player.shopStock.itemBought) {
-        const itemEl = document.createElement('div');
-        itemEl.className = 'shop-item';
-        itemEl.innerHTML = `
-            <div class="shop-item-info">
-                <div class="shop-item-title">1️⃣ Единичный козырь</div>
-                <div class="shop-item-desc">${getDynamicDesc(allItems.item_ones)}</div>
-            </div>
-            <button class="btn-buy" onclick="buyItem()">Купить <span>15 💰</span></button>
-        `;
-        shopContainer.appendChild(itemEl);
+        shopContainer.innerHTML += `<div class="shop-item"><div class="shop-item-info"><div class="shop-item-title">1️⃣ Единичный козырь</div><div class="shop-item-desc">${getDynamicDesc(allItems.item_ones)}</div></div><button class="btn-buy" onclick="buyItem()">Купить <span>15 💰</span></button></div>`;
     }
 
     const sellSection = document.createElement('div');
-    sellSection.style.marginTop = "20px";
-    sellSection.innerHTML = `<h3>Твои вещи (Продажа)</h3>`;
-    const invList = document.createElement('div');
-    invList.className = 'inventory-list'; invList.style.marginTop = "10px";
+    sellSection.style.marginTop = "20px"; sellSection.innerHTML = `<h3>Твои вещи (Продажа)</h3>`;
+    const invList = document.createElement('div'); invList.className = 'inventory-list'; invList.style.marginTop = "10px";
     player.inventory.forEach(item => {
-        const el = document.createElement('div');
-        el.className = 'inv-item';
-        el.style.flexDirection = 'row'; el.style.alignItems = 'center';
+        const el = document.createElement('div'); el.className = 'inv-item'; el.style.flexDirection = 'row'; el.style.alignItems = 'center';
         el.innerHTML = `<div class="inv-item-header"><span class="icon">${item.icon}</span><span>${item.name}</span></div>`;
-        const btn = document.createElement('button');
-        btn.className = 'sell-btn'; btn.innerText = 'Продать (3💰)';
+        const btn = document.createElement('button'); btn.className = 'sell-btn'; btn.innerText = 'Продать (3💰)';
         btn.onclick = (e) => { e.stopPropagation(); sellItem(item); };
-        el.appendChild(btn);
-        invList.appendChild(el);
+        el.appendChild(btn); invList.appendChild(el);
     });
-    sellSection.appendChild(invList);
-    shopContainer.appendChild(sellSection);
+    sellSection.appendChild(invList); shopContainer.appendChild(sellSection);
 
     const piggySection = document.getElementById('piggy-bank-section');
-    if (player.piggyBroken) {
-        piggySection.innerHTML = `<h3>🐷 Копилка</h3><p style="color:#F44336; font-weight:bold; text-align:center;">РАЗБИТА В ЭТОМ ЗАБЕГЕ</p>`;
-    } else {
-        piggySection.innerHTML = `<h3>🐷 Копилка</h3>
-            <p>Монет в копилке: <b>${player.piggyBank}</b></p>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-small" onclick="depositPiggy()">Кинуть 1 монету</button>
-                <button class="btn-small btn-danger" onclick="breakPiggy()">Разбить!</button>
-            </div>`;
+    if (player.piggyBroken) { piggySection.innerHTML = `<h3>🐷 Копилка</h3><p style="color:#F44336; font-weight:bold; text-align:center;">РАЗБИТА</p>`; } 
+    else {
+        piggySection.innerHTML = `<h3>🐷 Копилка</h3><p>Монет в копилке: <b>${player.piggyBank}</b></p>
+            <div style="display: flex; gap: 10px;"><button class="btn-small" onclick="depositPiggy()">Кинуть 1 монету</button><button class="btn-small btn-danger" onclick="breakPiggy()">Разбить!</button></div>`;
     }
 }
 
-function buyTicket() {
-    if (player.coins >= 3) {
-        player.coins -= 3;
-        const keys = Object.keys(allTickets);
-        const randomKey = keys[Math.floor(Math.random() * keys.length)];
-        player.ticketsInventory.push({...allTickets[randomKey]});
-        player.shopStock.ticketBought = true;
-        updateUI(); renderShop();
-        alert("Вы купили случайный билет! Проверьте инвентарь (🎒).");
-    } else { alert("Не хватает монет!"); }
-}
-
-function buyItem() {
-    if (player.coins >= 15) {
-        player.coins -= 15;
-        player.inventory.push({...allItems['item_ones']});
-        player.shopStock.itemBought = true;
-        updateUI(); renderShop();
-        alert("Вы купили Единичный козырь!");
-    } else { alert("Не хватает монет!"); }
-}
-
-function sellItem(item) {
-    if (confirm(`Продать ${item.name} за 3 монеты?`)) {
-        player.coins += 3;
-        player.inventory = player.inventory.filter(i => i.id !== item.id);
-        updateUI(); renderShop();
-    }
-}
-
-function depositPiggy() {
-    if (player.piggyBroken) return;
-    if (player.coins > 0) { player.coins -= 1; player.piggyBank += 1; updateUI(); renderShop(); } 
-    else { alert("У тебя нет монет!"); }
-}
-
-function breakPiggy() {
-    if (player.piggyBroken) return;
-    if (player.piggyBank === 0) { alert("Копилка пуста!"); return; }
-    let drop = Math.floor(Math.random() * 11) + 5; 
-    let actualDrop = Math.min(drop, player.piggyBank);
-    player.coins += actualDrop; player.piggyBank -= actualDrop; player.piggyBroken = true; 
-    updateUI(); renderShop();
-    alert(`Вы разбили копилку и получили ${actualDrop} монет!`);
-}
+function buyTicket() { if (player.coins >= 3) { player.coins -= 3; const k = Object.keys(allTickets); player.ticketsInventory.push({...allTickets[k[Math.floor(Math.random()*k.length)]]}); player.shopStock.ticketBought = true; updateUI(); renderShop(); alert("Куплено!"); } else alert("Нет монет!"); }
+function buyItem() { if (player.coins >= 15) { player.coins -= 15; player.inventory.push({...allItems['item_ones']}); player.shopStock.itemBought = true; updateUI(); renderShop(); alert("Куплено!"); } else alert("Нет монет!"); }
+function sellItem(item) { if (confirm(`Продать ${item.name} за 3?`)) { player.coins += 3; player.inventory = player.inventory.filter(i => i.id !== item.id); updateUI(); renderShop(); } }
+function depositPiggy() { if (!player.piggyBroken && player.coins > 0) { player.coins -= 1; player.piggyBank += 1; updateUI(); renderShop(); } else alert("Ошибка!"); }
+function breakPiggy() { if (player.piggyBroken || player.piggyBank === 0) return alert("Пусто!"); let drop = Math.floor(Math.random()*11)+5; let act = Math.min(drop, player.piggyBank); player.coins += act; player.piggyBank -= act; player.piggyBroken = true; updateUI(); renderShop(); alert(`Получено ${act} монет!`); }
 
 // --- МАТЕМАТИКА ---
 function getCombo(diceArray, isPlayer = false, type = 'none') {
@@ -250,12 +158,12 @@ function getCombo(diceArray, isPlayer = false, type = 'none') {
     let logExtra = "";
 
     if (isPlayer && type === 'atk' && player.build.some(i => i && i.id === 'item_ones')) {
-        let onesCount = evalDice.filter(d => d === 1).length;
-        if (onesCount > 0) {
-            let countsNoOnes = {}; evalDice.filter(d => d !== 1).forEach(d => countsNoOnes[d] = (countsNoOnes[d] || 0) + 1);
-            let maxCount = 0, bestVal = 1;
-            for (let val in countsNoOnes) { if (countsNoOnes[val] > maxCount) { maxCount = countsNoOnes[val]; bestVal = Number(val); } }
-            if (maxCount > 0) evalDice = evalDice.map(d => d === 1 ? bestVal : d);
+        let ones = evalDice.filter(d => d === 1).length;
+        if (ones > 0) {
+            let counts = {}; evalDice.filter(d => d !== 1).forEach(d => counts[d] = (counts[d] || 0) + 1);
+            let maxC = 0, bestV = 1;
+            for (let v in counts) { if (counts[v] > maxC) { maxC = counts[v]; bestV = Number(v); } }
+            if (maxC > 0) evalDice = evalDice.map(d => d === 1 ? bestV : d);
         }
     }
 
@@ -264,43 +172,40 @@ function getCombo(diceArray, isPlayer = false, type = 'none') {
     let values = Object.keys(counts).map(Number).sort((a, b) => a - b);
     let sum = 0, points = 0, name = 'Пустая', isPair = false;
 
-    if (countsArray[0] === 5) { let v = values[0]; sum = v * 5; points = 15; name = 'Покер'; }
-    else if (countsArray[0] === 4) { let v = values.find(v => counts[v] === 4); sum = v * 4; points = 13; name = 'Каре'; }
+    if (countsArray[0] === 5) { sum = values[0] * 5; points = 15; name = 'Покер'; }
+    else if (countsArray[0] === 4) { sum = values.find(v => counts[v] === 4) * 4; points = 13; name = 'Каре'; }
     else if (countsArray[0] === 3 && countsArray[1] === 2) { sum = evalDice.reduce((a, b) => a + b, 0); points = 8; name = 'Фулл-хаус'; }
     else if (values.length === 5 && values[4] - values[0] === 4) { sum = evalDice.reduce((a, b) => a + b, 0); points = 10; name = 'Стрит'; }
-    else if (countsArray[0] === 3) { let v = values.find(v => counts[v] === 3); sum = v * 3; points = 6; name = 'Сет'; }
+    else if (countsArray[0] === 3) { sum = values.find(v => counts[v] === 3) * 3; points = 6; name = 'Сет'; }
     else if (countsArray[0] === 2 && countsArray[1] === 2) { values.forEach(v => { if (counts[v] === 2) sum += v * 2; }); points = 4; name = 'Две пары'; }
-    else if (countsArray[0] === 2) { let v = values.find(v => counts[v] === 2); sum = v * 2; points = 2; name = 'Пара'; isPair = true; }
+    else if (countsArray[0] === 2) { sum = values.find(v => counts[v] === 2) * 2; points = 2; name = 'Пара'; isPair = true; }
 
     let extraPoints = 0, extraSum = 0;
-    
     if (isPlayer && type === 'atk') {
         player.build.forEach(item => {
             if (!item) return;
             if (item.id === 'item_pair' && isPair) { extraPoints += item.pairBonus; logExtra += ` [+${item.pairBonus}]`; }
             if (item.id === 'item_flat5') { extraPoints += item.flatBonus; logExtra += ` [+${item.flatBonus}]`; }
             if (item.id === 'item_high') {
-                let usedDiceCounts = {};
-                if (name === 'Покер') usedDiceCounts[values[0]] = 5;
-                else if (name === 'Каре') usedDiceCounts[values.find(v => counts[v] === 4)] = 4;
-                else if (name === 'Фулл-хаус') { usedDiceCounts[values.find(v => counts[v] === 3)] = 3; usedDiceCounts[values.find(v => counts[v] === 2)] = 2; }
-                else if (name === 'Стрит') { evalDice.forEach(d => usedDiceCounts[d] = (usedDiceCounts[d] || 0) + 1); }
-                else if (name === 'Сет') usedDiceCounts[values.find(v => counts[v] === 3)] = 3;
-                else if (name === 'Две пары') { values.forEach(v => { if (counts[v] === 2) usedDiceCounts[v] = 2; }); }
-                else if (name === 'Пара') usedDiceCounts[values.find(v => counts[v] === 2)] = 2;
+                let used = {};
+                if (name === 'Покер') used[values[0]] = 5; else if (name === 'Каре') used[values.find(v=>counts[v]===4)] = 4;
+                else if (name === 'Фулл-хаус') { used[values.find(v=>counts[v]===3)] = 3; used[values.find(v=>counts[v]===2)] = 2; }
+                else if (name === 'Стрит') { evalDice.forEach(d => used[d] = (used[d]||0)+1); }
+                else if (name === 'Сет') used[values.find(v=>counts[v]===3)] = 3;
+                else if (name === 'Две пары') { values.forEach(v => { if (counts[v]===2) used[v] = 2; }); }
+                else if (name === 'Пара') used[values.find(v=>counts[v]===2)] = 2;
                 
-                let remainingDice = [], tempCounts = {...counts};
-                for (let v in usedDiceCounts) { tempCounts[v] -= usedDiceCounts[v]; }
-                for (let v in tempCounts) { for (let i=0; i<tempCounts[v]; i++) remainingDice.push(Number(v)); }
-                
-                if (remainingDice.length > 0) { let maxD = Math.max(...remainingDice); extraSum += maxD; logExtra += ` [+${maxD} от Козыря]`; }
+                let rem = [], temp = {...counts};
+                for (let v in used) temp[v] -= used[v];
+                for (let v in temp) { for (let i=0; i<temp[v]; i++) rem.push(Number(v)); }
+                if (rem.length > 0) { let maxD = Math.max(...rem); extraSum += maxD; logExtra += ` [+${maxD} Козырь]`; }
             }
         });
     }
     return { name, total: Math.ceil((sum + extraSum) / 2) + points + extraPoints, isPair, logExtra };
 }
 
-// --- КАРТА ---
+// --- КАРТА И СОБЫТИЯ ---
 function initGame() { createMapGrid(); updateUI(); }
 
 function createMapGrid() {
@@ -334,21 +239,82 @@ function tryMoveTo(targetRoomId) {
             player.defeatedEnemies.push('treasury_looted'); triggerLoot(); return;
         }
         if (rooms[targetRoomId].type === 'shop') { openShop(); return; }
+        if (rooms[targetRoomId].type === 'event' && !player.defeatedEnemies.includes('event_done')) {
+            player.defeatedEnemies.push('event_done'); triggerEvent(); return;
+        }
         if ((rooms[targetRoomId].type === 'enemy' || rooms[targetRoomId].type === 'boss') && !player.defeatedEnemies.includes(targetRoomId)) {
             startCombat(targetRoomId);
         } else { updateUI(); showText(rooms[targetRoomId].text); }
     }
 }
 
+function triggerEvent() {
+    const events = [
+        {
+            title: "Зеркало",
+            text: "Вы увидели себя в зеркале, и оно напоминает вам, что вы тоже являетесь фишкой, как и все в этом подземелье.",
+            choices: [
+                { text: "Всмотреться в зеркало", action: () => { showText("Сколько себя не разглядывай, всё ещё фишка. Ничего не происходит."); closeEvent(); } },
+                { text: "Разбить зеркало", action: () => { player.hp = Math.max(1, player.hp - 5); updateUI(); showText("Вы разбиваете зеркало... Получено 5 урона."); closeEvent(); } },
+                { text: "Игнорировать", action: () => { showText("Вы игнорируете зеркало. Кому интересно смотреть на свои круглые формы?"); closeEvent(); } }
+            ]
+        },
+        {
+            title: "Карта под фишкой",
+            text: "Вы встречаете карту, которая лежит под фишкой и край её уголка торчит и просит, чтобы её достали.",
+            choices: [
+                { text: "Достать карту", action: () => { 
+                    if (Math.random() < 0.8) { 
+                        const k = Object.keys(allItems).filter(i => i !== 'item_ones'); // Из пула сокровищницы
+                        player.inventory.push({...allItems[k[Math.floor(Math.random()*k.length)]]});
+                        showText("Вы достали карту! Теперь она может уйти под ваш билд!"); 
+                    } else { showText("Карта рвётся и вы получаете бесполезный клочёк бумаги."); }
+                    closeEvent(); 
+                } },
+                { text: "Игнорировать", action: () => { showText("Пытаться доставать карты из-под фишек слишком страшно для вас."); closeEvent(); } }
+            ]
+        },
+        {
+            title: "Свеча",
+            text: "В центре комнаты парит какая-то свеча. Интересно какая магия её удерживает?",
+            choices: [
+                { text: "Задуть свечку", action: () => { 
+                    player.hideMapIcons = true;
+                    updateUI();
+                    showText("Подземелье погружается во тьму… Теперь вы видите чуть хуже."); 
+                    closeEvent(); 
+                } },
+                { text: "Не задувать свечку", action: () => { showText("Чтож… Вы оставили всё как есть. Опасно экспериментировать с магией."); closeEvent(); } }
+            ]
+        }
+    ];
+
+    const ev = events[Math.floor(Math.random() * events.length)];
+    document.getElementById('event-title').innerText = ev.title;
+    document.getElementById('event-text').innerText = ev.text;
+    
+    const choicesContainer = document.getElementById('event-choices');
+    choicesContainer.innerHTML = '';
+    ev.choices.forEach(choice => {
+        const btn = document.createElement('button');
+        btn.className = 'event-choice-btn';
+        btn.innerText = choice.text;
+        btn.onclick = choice.action;
+        choicesContainer.appendChild(btn);
+    });
+
+    document.getElementById('event-modal').style.display = 'flex';
+}
+
+function closeEvent() {
+    document.getElementById('event-modal').style.display = 'none';
+    updateUI();
+}
+
 function triggerLoot() {
-    const treasuryPool = ['item_pair', 'item_flat5', 'item_high'];
-    const randomKey = treasuryPool[Math.floor(Math.random() * treasuryPool.length)];
-    currentLootItem = { ...allItems[randomKey] };
-    document.getElementById('loot-item-display').innerHTML = `
-        <span class="icon">${currentLootItem.icon}</span>
-        <div class="title">${currentLootItem.name}</div>
-        <div class="desc">${getDynamicDesc(currentLootItem)}</div>
-    `;
+    const pool = ['item_pair', 'item_flat5', 'item_high'];
+    currentLootItem = { ...allItems[pool[Math.floor(Math.random() * pool.length)]] };
+    document.getElementById('loot-item-display').innerHTML = `<span class="icon">${currentLootItem.icon}</span><div class="title">${currentLootItem.name}</div><div class="desc">${getDynamicDesc(currentLootItem)}</div>`;
     document.getElementById('loot-modal').style.display = 'flex';
 }
 
@@ -367,7 +333,9 @@ function updateUI() {
 
     Object.keys(rooms).forEach(id => {
         const el = document.getElementById(`room-${id}`);
-        el.className = `room ${rooms[id].color}`; el.innerHTML = rooms[id].icon;
+        el.className = `room ${rooms[id].color}`; 
+        el.innerHTML = player.hideMapIcons ? '' : rooms[id].icon; // Скрываем иконки, если свеча задута
+        
         const isCurrent = id === player.currentRoomId;
         const isVisited = player.visitedRooms.includes(id);
         const isAvailable = connections[player.currentRoomId].includes(id);
@@ -384,30 +352,18 @@ function showText(text) { document.getElementById('room-text').innerText = text;
 
 // --- БОЙ ---
 function updateCombatBuildDisplay() {
-    const display = document.getElementById('combat-build-display');
-    if (!display) return;
+    const display = document.getElementById('combat-build-display'); if (!display) return;
     display.innerHTML = '';
-    player.build.forEach(item => {
-        if (item) {
-            const el = document.createElement('div');
-            el.className = 'combat-build-item'; el.innerText = item.icon; el.title = item.name;
-            display.appendChild(el);
-        }
-    });
+    player.build.forEach(item => { if (item) { const el = document.createElement('div'); el.className = 'combat-build-item'; el.innerText = item.icon; el.title = item.name; display.appendChild(el); } });
 }
 
 function renderCombatTickets() {
-    const container = document.getElementById('combat-tickets-list');
-    container.innerHTML = '';
-    if (player.ticketsInventory.length === 0) {
-        container.innerHTML = '<span style="font-size:12px; color:#666;">Нет билетов</span>';
-        return;
-    }
+    const container = document.getElementById('combat-tickets-list'); container.innerHTML = '';
+    if (player.ticketsInventory.length === 0) { container.innerHTML = '<span style="font-size:12px; color:#666;">Нет билетов</span>'; return; }
     player.ticketsInventory.forEach((tick, index) => {
         const btn = document.createElement('div');
         btn.className = 'combat-ticket-btn' + (combat.selectedTicketIndex === index ? ' active' : '');
         btn.innerHTML = `${tick.icon}<span class="combat-ticket-name">${tick.name}</span>`;
-        btn.title = tick.desc;
         btn.onclick = () => useTicket(index);
         container.appendChild(btn);
     });
@@ -416,72 +372,43 @@ function renderCombatTickets() {
 function useTicket(index) {
     if (!combat.active) return;
     let ticket = player.ticketsInventory[index];
-    
     if (ticket.effect === 'heal') {
         let heal = (Math.floor(Math.random() * 6) + 1) + (Math.floor(Math.random() * 6) + 1);
         player.hp = Math.min(player.maxHp, player.hp + heal);
         document.getElementById('player-hp').innerText = player.hp;
         document.getElementById('player-hp-bar').style.width = (player.hp / player.maxHp * 100) + '%';
-        
-        player.ticketsInventory.splice(index, 1);
-        combat.selectedTicketIndex = null;
-        renderCombatTickets();
+        player.ticketsInventory.splice(index, 1); combat.selectedTicketIndex = null; renderCombatTickets();
         document.getElementById('combat-log').innerText = `Использован билет [${ticket.name}]. Вы восстановили ${heal} HP!`;
         return;
     }
-
-    // Если выбран другой билет - отменяем
-    if (combat.selectedTicketIndex === index) {
-        combat.selectedTicketIndex = null;
-        document.getElementById('combat-log').innerText = "Использование билета отменено.";
-    } else {
-        combat.selectedTicketIndex = index;
-        document.getElementById('combat-log').innerText = `Выбран [${ticket.name}]. ${ticket.desc} Кликните по нужному кубику.`;
-    }
-    
-    renderCombatTickets();
-    renderCombatDice();
+    if (combat.selectedTicketIndex === index) { combat.selectedTicketIndex = null; document.getElementById('combat-log').innerText = "Использование отменено."; } 
+    else { combat.selectedTicketIndex = index; document.getElementById('combat-log').innerText = `Выбран [${ticket.name}]. ${ticket.desc} Кликните по кубику.`; }
+    renderCombatTickets(); renderCombatDice();
 }
 
 function applyTicketToDie(diceType, index) {
     if (combat.selectedTicketIndex === null) return;
     let ticket = player.ticketsInventory[combat.selectedTicketIndex];
-    let validTarget = false;
+    let valid = false;
 
-    if (ticket.effect === 'reroll_own' && (diceType === 'pAtk' || diceType === 'pDef')) {
-        combat.dice[diceType][index] = Math.floor(Math.random() * 6) + 1;
-        validTarget = true;
-    } else if (ticket.effect === 'minus_one' && (diceType === 'pAtk' || diceType === 'pDef')) {
-        combat.dice[diceType][index] = Math.max(1, combat.dice[diceType][index] - 1);
-        validTarget = true;
-    } else if (ticket.effect === 'reroll_enemy' && (diceType === 'enemyAtk' || diceType === 'enemyDef')) {
-        combat.dice[diceType][index] = Math.floor(Math.random() * 6) + 1;
-        validTarget = true;
-    }
+    if (ticket.effect === 'reroll_own' && (diceType === 'pAtk' || diceType === 'pDef')) { combat.dice[diceType][index] = Math.floor(Math.random()*6)+1; valid = true; } 
+    else if (ticket.effect === 'minus_one' && (diceType === 'pAtk' || diceType === 'pDef')) { combat.dice[diceType][index] = Math.max(1, combat.dice[diceType][index]-1); valid = true; } 
+    else if (ticket.effect === 'reroll_enemy' && (diceType === 'enemyAtk' || diceType === 'enemyDef')) { combat.dice[diceType][index] = Math.floor(Math.random()*6)+1; valid = true; }
 
-    if (validTarget) {
-        player.ticketsInventory.splice(combat.selectedTicketIndex, 1);
-        combat.selectedTicketIndex = null;
-        document.getElementById('combat-log').innerText = `Билет [${ticket.name}] применен к кубику!`;
-        renderCombatTickets();
-        renderCombatDice();
-        updatePreviews();
-    } else {
-        document.getElementById('combat-log').innerText = "Этот кубик не подходит для данного билета!";
-    }
+    if (valid) {
+        player.ticketsInventory.splice(combat.selectedTicketIndex, 1); combat.selectedTicketIndex = null;
+        document.getElementById('combat-log').innerText = `Билет [${ticket.name}] применен!`;
+        renderCombatTickets(); renderCombatDice(); updatePreviews();
+    } else { document.getElementById('combat-log').innerText = "Этот кубик не подходит!"; }
 }
 
 function startCombat(roomId) {
-    combat.active = true; combat.roomId = roomId; combat.rerollUsed = false; combat.selectedTicketIndex = null;
+    combat.active = true; combat.roomId = roomId; combat.rerollUsed = false; combat.selectedTicketIndex = null; combat.lockedDieIndex = -1;
     player.build.forEach(item => { if(item && item.id === 'item_pair') item.pairCount = 0; });
 
-    if (roomId === 'enemy1') {
-        combat.enemyName = '💀 Скелет-Атакер'; combat.enemyHp = 20; combat.enemyMaxHp = 20; combat.enemyHasDef = false;
-    } else if (roomId === 'enemy2') {
-        combat.enemyName = '💀 Скелет-Защитник'; combat.enemyHp = 25; combat.enemyMaxHp = 25; combat.enemyHasDef = true;
-    } else if (roomId === 'boss') {
-        combat.enemyName = '👑 Босс-Скелет'; combat.enemyHp = 30; combat.enemyMaxHp = 30; combat.enemyHasDef = true;
-    }
+    if (roomId === 'enemy1') { combat.enemyName = '💀 Скелет-Атакер'; combat.enemyHp = 20; combat.enemyMaxHp = 20; combat.enemyHasDef = false; combat.bossMechanic = false; } 
+    else if (roomId === 'enemy2') { combat.enemyName = '💀 Скелет-Защитник'; combat.enemyHp = 25; combat.enemyMaxHp = 25; combat.enemyHasDef = true; combat.bossMechanic = false; } 
+    else if (roomId === 'boss') { combat.enemyName = '👑 БОСС-Скелет'; combat.enemyHp = 30; combat.enemyMaxHp = 30; combat.enemyHasDef = true; combat.bossMechanic = true; }
 
     document.getElementById('enemy-name').innerText = combat.enemyName;
     document.getElementById('enemy-hp').innerText = combat.enemyHp;
@@ -492,7 +419,6 @@ function startCombat(roomId) {
     document.getElementById('combat-screen').style.display = 'flex';
     document.getElementById('player-hp').innerText = player.hp;
     document.getElementById('player-hp-bar').style.width = (player.hp / player.maxHp * 100) + '%';
-    
     document.getElementById('btn-roll').style.display = 'block';
     document.getElementById('btn-fight').style.display = 'none';
     document.getElementById('combat-log').innerText = `${combat.enemyName} готовится к бою...`;
@@ -504,25 +430,36 @@ function rollDiceArray() { return [1,1,1,1,1].map(() => Math.floor(Math.random()
 function resetDice() { combat.dice = { enemyAtk: [1,1,1,1,1], enemyDef: [1,1,1,1,1], pAtk: [1,1,1,1,1], pDef: [1,1,1,1,1] }; }
 
 function startTurn() {
-    combat.selectedTicketIndex = null;
+    combat.selectedTicketIndex = null; combat.lockedDieIndex = -1;
     renderCombatTickets();
-    combat.dice.enemyAtk = rollDiceArray();
-    if (combat.enemyHasDef) combat.dice.enemyDef = rollDiceArray();
+    
+    combat.dice.enemyAtk = rollDiceArray(); if (combat.enemyHasDef) combat.dice.enemyDef = rollDiceArray();
     combat.dice.pAtk = rollDiceArray(); combat.dice.pDef = rollDiceArray();
     combat.holds.pAtk = [false,false,false,false,false]; combat.holds.pDef = [false,false,false,false,false];
     combat.rerollUsed = false;
+
+    // МЕХАНИКА БОССА: Блокируем самый слабый кубик в атаке
+    if (combat.bossMechanic) {
+        let minVal = Math.min(...combat.dice.pAtk);
+        let minIndex = combat.dice.pAtk.indexOf(minVal);
+        combat.lockedDieIndex = minIndex;
+        combat.holds.pAtk[minIndex] = true; // Автоматически "оставляем" его
+        document.getElementById('combat-log').innerText = "Босс запрещает перебрасывать вашу самую слабую атаку (🔒)!";
+    } else {
+        document.getElementById('combat-log').innerText = "Выберите кубики для переброса или бейте!";
+    }
     
     document.getElementById('btn-roll').style.display = 'none';
     document.getElementById('btn-fight').style.display = 'block';
     document.getElementById('btn-reroll-atk').disabled = false;
     document.getElementById('btn-reroll-def').disabled = false;
-    document.getElementById('combat-log').innerText = "Выберите кубики для переброса или бейте! (Билеты можно использовать!)";
     
     renderCombatDice(); updatePreviews();
 }
 
 function toggleHold(type, index) {
     if (combat.rerollUsed || combat.selectedTicketIndex !== null) return;
+    if (type === 'pAtk' && index === combat.lockedDieIndex) return; // Нельзя трогать кубик босса
     combat.holds[type][index] = !combat.holds[type][index];
     renderCombatDice();
 }
@@ -536,7 +473,11 @@ function reroll(type) {
     let arr = type === 'atk' ? combat.dice.pAtk : combat.dice.pDef;
     let holds = type === 'atk' ? combat.holds.pAtk : combat.holds.pDef;
     
-    for(let i=0; i<5; i++) { if (!holds[i]) arr[i] = Math.floor(Math.random() * 6) + 1; }
+    for(let i=0; i<5; i++) { 
+        // Если это атака и кубик заблокирован боссом, мы его не перебрасываем
+        if (type === 'atk' && i === combat.lockedDieIndex) continue;
+        if (!holds[i]) arr[i] = Math.floor(Math.random() * 6) + 1; 
+    }
     document.getElementById('combat-log').innerText = `Вы перебросили ${type === 'atk' ? 'Атаку' : 'Защиту'}. Бейте!`;
     renderCombatDice(); updatePreviews();
 }
@@ -564,7 +505,7 @@ function resolveTurn() {
 
     let dmgToPlayer = Math.max(0, eAtk.total - pDef.total);
     player.hp -= dmgToPlayer;
-    if (player.hp < 1) player.hp = 1;
+    if (player.hp < 1) player.hp = 1; // Божественное вмешательство
 
     document.getElementById('player-hp').innerText = player.hp;
     document.getElementById('player-hp-bar').style.width = (player.hp / player.maxHp * 100) + '%';
@@ -587,17 +528,17 @@ function winCombat() {
     });
     if (brokenItemIndex !== -1) player.build[brokenItemIndex] = null;
 
+    if (combat.roomId === 'boss') {
+        document.getElementById('victory-screen').style.display = 'flex';
+        return;
+    }
+
     let rewardText = "";
     if (combat.roomId === 'enemy1') {
-        let coins = Math.floor(Math.random() * 3) + 1; 
-        player.coins += coins; rewardText = `Вы победили скелета и нашли ${coins} монет(ы)!`;
+        let coins = Math.floor(Math.random() * 3) + 1; player.coins += coins; rewardText = `Вы победили скелета и нашли ${coins} монет(ы)!`;
     } else if (combat.roomId === 'enemy2') {
-        const keys = Object.keys(allTickets);
-        const randomKey = keys[Math.floor(Math.random() * keys.length)];
-        player.ticketsInventory.push({...allTickets[randomKey]}); 
-        rewardText = `Вы победили защитника и нашли Билет: ${allTickets[randomKey].name}!`;
-    } else {
-        rewardText = `Вы победили Босса!`;
+        const k = Object.keys(allTickets); player.ticketsInventory.push({...allTickets[k[Math.floor(Math.random()*k.length)]]}); 
+        rewardText = `Вы победили защитника и нашли Билет!`;
     }
     
     document.getElementById('map-screen').style.display = 'flex';
@@ -615,14 +556,13 @@ function renderCombatDice() {
             
             if (!isPlayer) {
                 d.classList.add('enemy');
-                if (combat.selectedTicketIndex !== null && player.ticketsInventory[combat.selectedTicketIndex].effect === 'reroll_enemy') {
-                    d.classList.add('targetable');
-                    d.onclick = () => applyTicketToDie(type, i);
-                }
+                if (combat.selectedTicketIndex !== null && player.ticketsInventory[combat.selectedTicketIndex].effect === 'reroll_enemy') { d.classList.add('targetable'); d.onclick = () => applyTicketToDie(type, i); }
             } else {
+                // Если это кубик, заблокированный боссом
+                if (type === 'pAtk' && i === combat.lockedDieIndex) { d.classList.add('locked-by-boss'); }
+                
                 if (combat.selectedTicketIndex !== null && (player.ticketsInventory[combat.selectedTicketIndex].effect === 'reroll_own' || player.ticketsInventory[combat.selectedTicketIndex].effect === 'minus_one')) {
-                    d.classList.add('targetable');
-                    d.onclick = () => applyTicketToDie(type, i);
+                    d.classList.add('targetable'); d.onclick = () => applyTicketToDie(type, i);
                 } else {
                     if (combat.holds[type][i]) d.classList.add('held'); 
                     d.onclick = () => toggleHold(type, i);
@@ -642,6 +582,10 @@ function updatePreviews() {
     document.getElementById('preview-def').innerText = getCombo(combat.dice.pDef, true, 'def').total;
     document.getElementById('enemy-atk-total').innerText = getCombo(combat.dice.enemyAtk, false).total;
     if (combat.enemyHasDef) document.getElementById('enemy-def-total').innerText = getCombo(combat.dice.enemyDef, false).total;
+}
+
+function restartGame() {
+    location.reload(); // Самый простой и надежный способ для прототипа
 }
 
 window.onload = initGame;
