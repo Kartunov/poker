@@ -43,12 +43,8 @@
                 <h2>Магазин</h2>
                 <button class="btn-close" onclick="closeShop()">✖ Выйти</button>
             </div>
-            
             <div class="shop-items" id="shop-items"></div>
-
-            <div class="piggy-bank-section" id="piggy-bank-section">
-                <!-- Заполняется через JS -->
-            </div>
+            <div class="piggy-bank-section" id="piggy-bank-section"></div>
         </div>
 
         <!-- ================= ЭКРАН БОЯ ================= -->
@@ -67,7 +63,15 @@
                     <div class="dice-pool enemy-dice" id="enemy-def-dice"></div>
                 </div>
             </div>
+
+            <!-- Панель билетов в бою -->
+            <div id="combat-tickets-area">
+                <div class="tickets-title">Твои билеты (нажми, чтобы использовать):</div>
+                <div class="combat-tickets-list" id="combat-tickets-list"></div>
+            </div>
+
             <div id="combat-log">Нажмите "Бросок кубиков", чтобы начать.</div>
+            
             <div class="player-section">
                 <div class="hp-bar-container">
                     <div class="hp-bar" id="player-hp-bar" style="width: 100%;"></div>
@@ -77,12 +81,12 @@
                 <div class="hand-section">
                     <div class="hand-title">⚔️ Твоя Атака: <span id="preview-atk" class="preview-text">0</span></div>
                     <div class="dice-pool player-dice" id="player-atk-dice"></div>
-                    <button id="btn-reroll-atk" class="btn-reroll" onclick="reroll('atk')" disabled>Переброс атаки</button>
+                    <button id="btn-reroll-atk" class="btn-reroll" onclick="reroll('atk')" disabled>Переброс атаки (1 раз)</button>
                 </div>
                 <div class="hand-section">
                     <div class="hand-title">🛡️ Твоя Защита: <span id="preview-def" class="preview-text">0</span></div>
                     <div class="dice-pool player-dice" id="player-def-dice"></div>
-                    <button id="btn-reroll-def" class="btn-reroll" onclick="reroll('def')" disabled>Переброс защиты</button>
+                    <button id="btn-reroll-def" class="btn-reroll" onclick="reroll('def')" disabled>Переброс защиты (1 раз)</button>
                 </div>
                 <div class="action-buttons">
                     <button id="btn-roll" class="btn-main" onclick="startTurn()">Бросок кубиков</button>
