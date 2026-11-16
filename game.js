@@ -32,7 +32,7 @@ let player = {
     hp: 50, maxHp: 50, coins: 3, currentRoomId: 'start', visitedRooms: ['start'], defeatedEnemies: [],
     inventory: [], build: [null, null, null, null, null],
     ticketsInventory: [], piggyBank: 0, piggyBroken: false, shopStock: { ticketBought: false, itemBought: false },
-    hideMapIcons: false // Флаг для события со свечой
+    hideMapIcons: false 
 };
 
 let combat = {
@@ -250,66 +250,41 @@ function tryMoveTo(targetRoomId) {
 
 function triggerEvent() {
     const events = [
-        {
-            title: "Зеркало",
-            text: "Вы увидели себя в зеркале, и оно напоминает вам, что вы тоже являетесь фишкой, как и все в этом подземелье.",
-            choices: [
-                { text: "Всмотреться в зеркало", action: () => { showText("Сколько себя не разглядывай, всё ещё фишка. Ничего не происходит."); closeEvent(); } },
-                { text: "Разбить зеркало", action: () => { player.hp = Math.max(1, player.hp - 5); updateUI(); showText("Вы разбиваете зеркало... Получено 5 урона."); closeEvent(); } },
-                { text: "Игнорировать", action: () => { showText("Вы игнорируете зеркало. Кому интересно смотреть на свои круглые формы?"); closeEvent(); } }
-            ]
-        },
-        {
-            title: "Карта под фишкой",
-            text: "Вы встречаете карту, которая лежит под фишкой и край её уголка торчит и просит, чтобы её достали.",
-            choices: [
-                { text: "Достать карту", action: () => { 
-                    if (Math.random() < 0.8) { 
-                        const k = Object.keys(allItems).filter(i => i !== 'item_ones'); // Из пула сокровищницы
-                        player.inventory.push({...allItems[k[Math.floor(Math.random()*k.length)]]});
-                        showText("Вы достали карту! Теперь она может уйти под ваш билд!"); 
-                    } else { showText("Карта рвётся и вы получаете бесполезный клочёк бумаги."); }
-                    closeEvent(); 
-                } },
-                { text: "Игнорировать", action: () => { showText("Пытаться доставать карты из-под фишек слишком страшно для вас."); closeEvent(); } }
-            ]
-        },
-        {
-            title: "Свеча",
-            text: "В центре комнаты парит какая-то свеча. Интересно какая магия её удерживает?",
-            choices: [
-                { text: "Задуть свечку", action: () => { 
-                    player.hideMapIcons = true;
-                    updateUI();
-                    showText("Подземелье погружается во тьму… Теперь вы видите чуть хуже."); 
-                    closeEvent(); 
-                } },
-                { text: "Не задувать свечку", action: () => { showText("Чтож… Вы оставили всё как есть. Опасно экспериментировать с магией."); closeEvent(); } }
-            ]
-        }
+        { title: "Зеркало", text: "Вы увидели себя в зеркале, и оно напоминает вам, что вы тоже являетесь фишкой, как и все в этом подземелье.", choices: [
+            { text: "Всмотреться в зеркало", action: () => { showText("Сколько себя не разглядывай, всё ещё фишка. Ничего не происходит."); closeEvent(); } },
+            { text: "Разбить зеркало", action: () => { player.hp = Math.max(1, player.hp - 5); updateUI(); showText("Вы разбиваете зеркало... Получено 5 урона."); closeEvent(); } },
+            { text: "Игнорировать", action: () => { showText("Вы игнорируете зеркало. Кому интересно смотреть на свои круглые формы?"); closeEvent(); } }
+        ]},
+        { title: "Карта под фишкой", text: "Вы встречаете карту, которая лежит под фишкой и край её уголка торчит и просит, чтобы её достали.", choices: [
+            { text: "Достать карту", action: () => { 
+                if (Math.random() < 0.8) { 
+                    const k = Object.keys(allItems).filter(i => i !== 'item_ones'); 
+                    player.inventory.push({...allItems[k[Math.floor(Math.random()*k.length)]]});
+                    showText("Вы достали карту! Теперь она может уйти под ваш билд!"); 
+                } else { showText("Карта рвётся и вы получаете бесполезный клочёк бумаги."); }
+                closeEvent(); 
+            } },
+            { text: "Игнорировать", action: () => { showText("Пытаться доставать карты из-под фишек слишком страшно для вас."); closeEvent(); } }
+        ]},
+        { title: "Свеча", text: "В центре комнаты парит какая-то свеча. Интересно какая магия её удерживает?", choices: [
+            { text: "Задуть свечку", action: () => { 
+                player.hideMapIcons = true; updateUI();
+                showText("Подземелье погружается во тьму… Теперь вы видите чуть хуже."); closeEvent(); 
+            } },
+            { text: "Не задувать свечку", action: () => { showText("Чтож… Вы оставили всё как есть. Опасно экспериментировать с магией."); closeEvent(); } }
+        ]}
     ];
-
     const ev = events[Math.floor(Math.random() * events.length)];
     document.getElementById('event-title').innerText = ev.title;
     document.getElementById('event-text').innerText = ev.text;
-    
-    const choicesContainer = document.getElementById('event-choices');
-    choicesContainer.innerHTML = '';
+    const choicesContainer = document.getElementById('event-choices'); choicesContainer.innerHTML = '';
     ev.choices.forEach(choice => {
-        const btn = document.createElement('button');
-        btn.className = 'event-choice-btn';
-        btn.innerText = choice.text;
-        btn.onclick = choice.action;
-        choicesContainer.appendChild(btn);
+        const btn = document.createElement('button'); btn.className = 'event-choice-btn'; btn.innerText = choice.text; btn.onclick = choice.action; choicesContainer.appendChild(btn);
     });
-
     document.getElementById('event-modal').style.display = 'flex';
 }
 
-function closeEvent() {
-    document.getElementById('event-modal').style.display = 'none';
-    updateUI();
-}
+function closeEvent() { document.getElementById('event-modal').style.display = 'none'; updateUI(); }
 
 function triggerLoot() {
     const pool = ['item_pair', 'item_flat5', 'item_high'];
@@ -319,11 +294,7 @@ function triggerLoot() {
 }
 
 function claimLoot() {
-    if (currentLootItem) {
-        player.inventory.push(currentLootItem); currentLootItem = null;
-        document.getElementById('loot-modal').style.display = 'none';
-        updateUI(); showText("Вы забрали предмет в сумку.");
-    }
+    if (currentLootItem) { player.inventory.push(currentLootItem); currentLootItem = null; document.getElementById('loot-modal').style.display = 'none'; updateUI(); showText("Вы забрали предмет в сумку."); }
 }
 
 function updateUI() {
@@ -334,13 +305,23 @@ function updateUI() {
     Object.keys(rooms).forEach(id => {
         const el = document.getElementById(`room-${id}`);
         el.className = `room ${rooms[id].color}`; 
-        el.innerHTML = player.hideMapIcons ? '' : rooms[id].icon; // Скрываем иконки, если свеча задута
         
         const isCurrent = id === player.currentRoomId;
         const isVisited = player.visitedRooms.includes(id);
         const isAvailable = connections[player.currentRoomId].includes(id);
         let isLocked = (id === 'enemy2' && (!player.visitedRooms.includes('treasury') || !player.visitedRooms.includes('shop')));
 
+        // --- ИСТИННЫЙ ТУМАН ВОЙНЫ ---
+        const isKnown = isCurrent || isVisited || isAvailable;
+        if (!isKnown) {
+            el.classList.add('hidden'); // Скрываем полностью
+        } else {
+            el.style.visibility = 'visible'; // Показываем
+        }
+
+        // Иконки скрываются, если сработала свеча (hideMapIcons)
+        el.innerHTML = player.hideMapIcons ? '' : rooms[id].icon;
+        
         if (isCurrent) el.classList.add('current');
         else if (isAvailable && !isLocked) el.classList.add('available');
         else if (isVisited) { el.classList.add('visited'); if (isLocked) el.classList.add('locked'); }
@@ -438,12 +419,11 @@ function startTurn() {
     combat.holds.pAtk = [false,false,false,false,false]; combat.holds.pDef = [false,false,false,false,false];
     combat.rerollUsed = false;
 
-    // МЕХАНИКА БОССА: Блокируем самый слабый кубик в атаке
     if (combat.bossMechanic) {
         let minVal = Math.min(...combat.dice.pAtk);
         let minIndex = combat.dice.pAtk.indexOf(minVal);
         combat.lockedDieIndex = minIndex;
-        combat.holds.pAtk[minIndex] = true; // Автоматически "оставляем" его
+        combat.holds.pAtk[minIndex] = true; 
         document.getElementById('combat-log').innerText = "Босс запрещает перебрасывать вашу самую слабую атаку (🔒)!";
     } else {
         document.getElementById('combat-log').innerText = "Выберите кубики для переброса или бейте!";
@@ -459,7 +439,7 @@ function startTurn() {
 
 function toggleHold(type, index) {
     if (combat.rerollUsed || combat.selectedTicketIndex !== null) return;
-    if (type === 'pAtk' && index === combat.lockedDieIndex) return; // Нельзя трогать кубик босса
+    if (type === 'pAtk' && index === combat.lockedDieIndex) return; 
     combat.holds[type][index] = !combat.holds[type][index];
     renderCombatDice();
 }
@@ -474,7 +454,6 @@ function reroll(type) {
     let holds = type === 'atk' ? combat.holds.pAtk : combat.holds.pDef;
     
     for(let i=0; i<5; i++) { 
-        // Если это атака и кубик заблокирован боссом, мы его не перебрасываем
         if (type === 'atk' && i === combat.lockedDieIndex) continue;
         if (!holds[i]) arr[i] = Math.floor(Math.random() * 6) + 1; 
     }
@@ -505,7 +484,7 @@ function resolveTurn() {
 
     let dmgToPlayer = Math.max(0, eAtk.total - pDef.total);
     player.hp -= dmgToPlayer;
-    if (player.hp < 1) player.hp = 1; // Божественное вмешательство
+    if (player.hp < 1) player.hp = 1; 
 
     document.getElementById('player-hp').innerText = player.hp;
     document.getElementById('player-hp-bar').style.width = (player.hp / player.maxHp * 100) + '%';
@@ -558,7 +537,6 @@ function renderCombatDice() {
                 d.classList.add('enemy');
                 if (combat.selectedTicketIndex !== null && player.ticketsInventory[combat.selectedTicketIndex].effect === 'reroll_enemy') { d.classList.add('targetable'); d.onclick = () => applyTicketToDie(type, i); }
             } else {
-                // Если это кубик, заблокированный боссом
                 if (type === 'pAtk' && i === combat.lockedDieIndex) { d.classList.add('locked-by-boss'); }
                 
                 if (combat.selectedTicketIndex !== null && (player.ticketsInventory[combat.selectedTicketIndex].effect === 'reroll_own' || player.ticketsInventory[combat.selectedTicketIndex].effect === 'minus_one')) {
@@ -585,7 +563,7 @@ function updatePreviews() {
 }
 
 function restartGame() {
-    location.reload(); // Самый простой и надежный способ для прототипа
+    location.reload(); 
 }
 
 window.onload = initGame;
