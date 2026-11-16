@@ -36,19 +36,32 @@ body { margin: 0; background-color: var(--bg-color); color: var(--text-color); d
 .build-slots { display: flex; gap: 5px; margin-bottom: 25px; justify-content: center; }
 .build-slot { width: 60px; height: 80px; border: 2px dashed #555; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #1a1a1a; font-size: 10px; text-align: center; padding: 5px; color: #777; }
 .build-slot.filled { border-style: solid; border-color: var(--yellow); background: #2a2a2a; color: white; cursor: pointer; }
-
 .inventory-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
 .inv-item { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 10px; cursor: pointer; display: flex; flex-direction: column; text-align: left; }
 .inv-item:active { background: #333; }
 .inv-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; font-size: 16px; font-weight: bold; }
 .inv-item .icon { font-size: 24px; }
 .inv-item-desc { font-size: 12px; color: #aaa; line-height: 1.4; }
+.ticket-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.ticket-item { background: #222; border-left: 4px solid #9C27B0; padding: 10px; border-radius: 5px; display: flex; align-items: center; gap: 10px; }
+.ticket-icon { font-size: 20px; }
+.ticket-info { display: flex; flex-direction: column; }
+.ticket-name { font-size: 14px; font-weight: bold; color: #ce93d8; }
+.ticket-desc { font-size: 11px; color: #888; margin-top: 2px; }
 
 /* ---------------- БОЙ ---------------- */
 #combat-screen { display: flex; flex-direction: column; height: 100%; padding: 10px; background: #0a0a0a; }
 .enemy-section { background: #1a1a1a; padding: 10px; border-radius: 10px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; margin-bottom: 5px;}
 .enemy-info { display: flex; justify-content: space-between; width: 100%; font-size: 16px; font-weight: bold; margin-bottom: 5px; }
 .hp-text { color: #F44336; }
+
+#combat-tickets-area { background: #1a1a1a; padding: 8px; border-radius: 8px; margin: 5px 0; border: 1px dashed #9C27B0; }
+.tickets-title { font-size: 11px; color: #9C27B0; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; text-align: center; }
+.combat-tickets-list { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 5px; }
+.combat-ticket-btn { background: #2a2a2a; border: 1px solid #555; border-radius: 5px; padding: 5px 8px; font-size: 18px; cursor: pointer; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+.combat-ticket-btn.active { border-color: #4CAF50; box-shadow: 0 0 10px #4CAF50; transform: translateY(-2px); }
+.combat-ticket-name { font-size: 9px; color: #ccc; margin-top: 3px; max-width: 50px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 #combat-log { text-align: center; margin: 5px 0; font-size: 13px; color: #aaa; min-height: 35px; line-height: 1.3; }
 .player-section { margin-top: auto; background: #1a1a1a; padding: 10px; border-radius: 10px; border: 1px solid #333; }
 .hp-bar-container { position: relative; width: 100%; height: 18px; background: #333; border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
@@ -66,13 +79,15 @@ body { margin: 0; background-color: var(--bg-color); color: var(--text-color); d
 .die { width: 36px; height: 36px; background: #e0e0e0; color: #121212; font-size: 18px; font-weight: bold; display: flex; justify-content: center; align-items: center; border-radius: 6px; cursor: pointer; transition: transform 0.1s; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 .die.held { background: #ffeb3b; transform: translateY(-4px); border: 2px solid #fff; }
 .die.enemy { cursor: default; background: #cfcfcf; }
+.die.targetable { border: 2px solid #4CAF50; box-shadow: 0 0 10px #4CAF50; animation: pulse-green 1s infinite alternate; cursor: crosshair; }
+@keyframes pulse-green { from { box-shadow: 0 0 5px #4CAF50; } to { box-shadow: 0 0 15px #4CAF50; } }
 
 .btn-reroll { width: 100%; padding: 6px; background: #444; color: white; border: none; border-radius: 5px; font-size: 11px; cursor: pointer; }
 .btn-reroll:disabled { opacity: 0.3; cursor: not-allowed; }
 .action-buttons { margin-top: 10px; display: flex; gap: 10px; }
 .btn-main { flex: 1; padding: 12px; font-size: 16px; font-weight: bold; color: white; background: #4CAF50; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 3px 5px rgba(0,0,0,0.3); }
 
-/* ---------------- МОДАЛКА ЛУТА ---------------- */
+/* ---------------- МОДАЛКА ЛУТА И МАГАЗИН ---------------- */
 #loot-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; backdrop-filter: blur(3px); }
 .loot-content { background: #1e1e1e; width: 100%; max-width: 320px; border-radius: 15px; padding: 25px; text-align: center; border: 2px solid var(--yellow); box-shadow: 0 0 30px rgba(255, 235, 59, 0.2); }
 .loot-content h2 { color: var(--yellow); margin-top: 0; }
@@ -81,7 +96,6 @@ body { margin: 0; background-color: var(--bg-color); color: var(--text-color); d
 .loot-item-big .title { font-size: 18px; font-weight: bold; color: #fff; margin-bottom: 10px; }
 .loot-item-big .desc { font-size: 14px; color: #aaa; line-height: 1.4; }
 
-/* ---------------- МАГАЗИН ---------------- */
 #shop-screen { display: flex; flex-direction: column; height: 100%; padding: 15px; background: var(--bg-color); overflow-y: auto; }
 .shop-items { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; }
 .shop-item { background: #2a2a2a; border: 1px solid #444; border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
@@ -91,17 +105,8 @@ body { margin: 0; background-color: var(--bg-color); color: var(--text-color); d
 .btn-buy { background: #4CAF50; color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; min-width: 70px; }
 .btn-buy span { font-size: 10px; font-weight: normal; margin-top: 3px; }
 .btn-buy:disabled { background: #555; cursor: not-allowed; opacity: 0.7; }
-
 .piggy-bank-section { background: #2a1a1a; border: 1px solid var(--red); border-radius: 10px; padding: 15px; text-align: center; margin-top: auto; }
 .piggy-bank-section h3 { margin: 0 0 10px 0; color: #ff8a80; }
 .btn-small { background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 5px; cursor: pointer; flex: 1; font-size: 13px; }
 .btn-danger { background: #d32f2f; border-color: #f44336; }
-
-/* Билеты в инвентаре */
-.ticket-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
-.ticket-item { background: #222; border-left: 4px solid #9C27B0; padding: 10px; border-radius: 5px; display: flex; align-items: center; gap: 10px; }
-.ticket-icon { font-size: 20px; }
-.ticket-info { display: flex; flex-direction: column; }
-.ticket-name { font-size: 14px; font-weight: bold; color: #ce93d8; }
-.ticket-desc { font-size: 11px; color: #888; margin-top: 2px; }
 .sell-btn { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; margin-left: auto; }
