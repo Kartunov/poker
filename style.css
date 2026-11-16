@@ -16,23 +16,23 @@ body { margin: 0; background-color: var(--bg-color); color: var(--text-color); d
 
 #map-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; }
 #map-grid { display: grid; grid-template-columns: repeat(3, var(--room-size)); grid-template-rows: repeat(4, var(--room-size)); gap: var(--gap); }
-.room { width: var(--room-size); height: var(--room-size); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 24px; border: 2px solid transparent; opacity: 0.2; cursor: not-allowed; }
+.room { width: var(--room-size); height: var(--room-size); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 24px; border: 2px solid transparent; opacity: 0.2; cursor: not-allowed; transition: opacity 0.3s; }
 .room.green { background-color: var(--green); } .room.grey { background-color: var(--grey); }
 .room.yellow { background-color: var(--yellow); color: #000; } .room.blue { background-color: var(--blue); }
 .room.purple { background-color: var(--purple); } .room.red { background-color: var(--red); }
 .room.visited { opacity: 1; } .room.available { opacity: 1; border-color: white; cursor: pointer; animation: pulse 1.5s infinite; }
 .room.current { border-color: white; box-shadow: 0 0 15px white; opacity: 1; cursor: default; }
 .room.locked { opacity: 0.5; cursor: not-allowed; border-color: red; }
+.room.hide-icon { font-size: 0 !important; /* Скрывает иконки по событию со свечой */ }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
 
 #bottom-bar { background: var(--panel-bg); padding: 15px; border-radius: 10px; margin-top: 15px; text-align: center; min-height: 70px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
 
-/* ---------------- ИНВЕНТАРЬ ---------------- */
-#inventory-screen { display: flex; flex-direction: column; height: 100%; padding: 15px; background: var(--bg-color); overflow-y: auto; }
+/* ---------------- ИНВЕНТАРЬ И МАГАЗИН ---------------- */
+#inventory-screen, #shop-screen { display: flex; flex-direction: column; height: 100%; padding: 15px; background: var(--bg-color); overflow-y: auto; }
 .inv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .inv-header h2 { margin: 0; font-size: 18px; color: #fff; }
 .btn-close { background: #F44336; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-
 .build-slots { display: flex; gap: 5px; margin-bottom: 25px; justify-content: center; }
 .build-slot { width: 60px; height: 80px; border: 2px dashed #555; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #1a1a1a; font-size: 10px; text-align: center; padding: 5px; color: #777; }
 .build-slot.filled { border-style: solid; border-color: var(--yellow); background: #2a2a2a; color: white; cursor: pointer; }
@@ -49,54 +49,6 @@ body { margin: 0; background-color: var(--bg-color); color: var(--text-color); d
 .ticket-name { font-size: 14px; font-weight: bold; color: #ce93d8; }
 .ticket-desc { font-size: 11px; color: #888; margin-top: 2px; }
 
-/* ---------------- БОЙ ---------------- */
-#combat-screen { display: flex; flex-direction: column; height: 100%; padding: 10px; background: #0a0a0a; }
-.enemy-section { background: #1a1a1a; padding: 10px; border-radius: 10px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; margin-bottom: 5px;}
-.enemy-info { display: flex; justify-content: space-between; width: 100%; font-size: 16px; font-weight: bold; margin-bottom: 5px; }
-.hp-text { color: #F44336; }
-
-#combat-tickets-area { background: #1a1a1a; padding: 8px; border-radius: 8px; margin: 5px 0; border: 1px dashed #9C27B0; }
-.tickets-title { font-size: 11px; color: #9C27B0; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; text-align: center; }
-.combat-tickets-list { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 5px; }
-.combat-ticket-btn { background: #2a2a2a; border: 1px solid #555; border-radius: 5px; padding: 5px 8px; font-size: 18px; cursor: pointer; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
-.combat-ticket-btn.active { border-color: #4CAF50; box-shadow: 0 0 10px #4CAF50; transform: translateY(-2px); }
-.combat-ticket-name { font-size: 9px; color: #ccc; margin-top: 3px; max-width: 50px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-#combat-log { text-align: center; margin: 5px 0; font-size: 13px; color: #aaa; min-height: 35px; line-height: 1.3; }
-.player-section { margin-top: auto; background: #1a1a1a; padding: 10px; border-radius: 10px; border: 1px solid #333; }
-.hp-bar-container { position: relative; width: 100%; height: 18px; background: #333; border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
-.hp-bar { height: 100%; background: #4CAF50; transition: width 0.3s ease; }
-.hp-label { position: absolute; top: 0; left: 0; width: 100%; text-align: center; font-size: 11px; line-height: 18px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; }
-
-.combat-build-display { display: flex; gap: 5px; margin-bottom: 10px; justify-content: center; min-height: 30px; }
-.combat-build-item { width: 30px; height: 30px; background: #333; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 14px; border: 1px solid var(--yellow); }
-
-.hand-section { margin-bottom: 5px; }
-.hand-title { font-size: 13px; font-weight: bold; margin-bottom: 2px; color: #888; display: flex; justify-content: space-between; align-items: center; }
-.preview-text { color: #ffeb3b; font-size: 16px; font-weight: bold; background: #333; padding: 1px 6px; border-radius: 5px; }
-
-.dice-pool { display: flex; gap: 6px; justify-content: center; margin-bottom: 5px; }
-.die { width: 36px; height: 36px; background: #e0e0e0; color: #121212; font-size: 18px; font-weight: bold; display: flex; justify-content: center; align-items: center; border-radius: 6px; cursor: pointer; transition: transform 0.1s; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-.die.held { background: #ffeb3b; transform: translateY(-4px); border: 2px solid #fff; }
-.die.enemy { cursor: default; background: #cfcfcf; }
-.die.targetable { border: 2px solid #4CAF50; box-shadow: 0 0 10px #4CAF50; animation: pulse-green 1s infinite alternate; cursor: crosshair; }
-@keyframes pulse-green { from { box-shadow: 0 0 5px #4CAF50; } to { box-shadow: 0 0 15px #4CAF50; } }
-
-.btn-reroll { width: 100%; padding: 6px; background: #444; color: white; border: none; border-radius: 5px; font-size: 11px; cursor: pointer; }
-.btn-reroll:disabled { opacity: 0.3; cursor: not-allowed; }
-.action-buttons { margin-top: 10px; display: flex; gap: 10px; }
-.btn-main { flex: 1; padding: 12px; font-size: 16px; font-weight: bold; color: white; background: #4CAF50; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 3px 5px rgba(0,0,0,0.3); }
-
-/* ---------------- МОДАЛКА ЛУТА И МАГАЗИН ---------------- */
-#loot-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; backdrop-filter: blur(3px); }
-.loot-content { background: #1e1e1e; width: 100%; max-width: 320px; border-radius: 15px; padding: 25px; text-align: center; border: 2px solid var(--yellow); box-shadow: 0 0 30px rgba(255, 235, 59, 0.2); }
-.loot-content h2 { color: var(--yellow); margin-top: 0; }
-.loot-item-big { background: #2a2a2a; padding: 20px; border-radius: 10px; margin: 20px 0; border: 1px solid #444; }
-.loot-item-big .icon { font-size: 48px; display: block; margin-bottom: 10px; }
-.loot-item-big .title { font-size: 18px; font-weight: bold; color: #fff; margin-bottom: 10px; }
-.loot-item-big .desc { font-size: 14px; color: #aaa; line-height: 1.4; }
-
-#shop-screen { display: flex; flex-direction: column; height: 100%; padding: 15px; background: var(--bg-color); overflow-y: auto; }
 .shop-items { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; }
 .shop-item { background: #2a2a2a; border: 1px solid #444; border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
 .shop-item-info { display: flex; flex-direction: column; flex: 1; }
@@ -110,3 +62,52 @@ body { margin: 0; background-color: var(--bg-color); color: var(--text-color); d
 .btn-small { background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 5px; cursor: pointer; flex: 1; font-size: 13px; }
 .btn-danger { background: #d32f2f; border-color: #f44336; }
 .sell-btn { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; margin-left: auto; }
+
+/* ---------------- БОЙ ---------------- */
+#combat-screen { display: flex; flex-direction: column; height: 100%; padding: 10px; background: #0a0a0a; }
+.enemy-section { background: #1a1a1a; padding: 10px; border-radius: 10px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; margin-bottom: 5px;}
+.enemy-info { display: flex; justify-content: space-between; width: 100%; font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+.hp-text { color: #F44336; }
+#combat-tickets-area { background: #1a1a1a; padding: 8px; border-radius: 8px; margin: 5px 0; border: 1px dashed #9C27B0; }
+.tickets-title { font-size: 11px; color: #9C27B0; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; text-align: center; }
+.combat-tickets-list { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 5px; }
+.combat-ticket-btn { background: #2a2a2a; border: 1px solid #555; border-radius: 5px; padding: 5px 8px; font-size: 18px; cursor: pointer; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+.combat-ticket-btn.active { border-color: #4CAF50; box-shadow: 0 0 10px #4CAF50; transform: translateY(-2px); }
+.combat-ticket-name { font-size: 9px; color: #ccc; margin-top: 3px; max-width: 50px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#combat-log { text-align: center; margin: 5px 0; font-size: 13px; color: #aaa; min-height: 35px; line-height: 1.3; }
+.player-section { margin-top: auto; background: #1a1a1a; padding: 10px; border-radius: 10px; border: 1px solid #333; }
+.hp-bar-container { position: relative; width: 100%; height: 18px; background: #333; border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+.hp-bar { height: 100%; background: #4CAF50; transition: width 0.3s ease; }
+.hp-label { position: absolute; top: 0; left: 0; width: 100%; text-align: center; font-size: 11px; line-height: 18px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; }
+.combat-build-display { display: flex; gap: 5px; margin-bottom: 10px; justify-content: center; min-height: 30px; }
+.combat-build-item { width: 30px; height: 30px; background: #333; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 14px; border: 1px solid var(--yellow); }
+.hand-section { margin-bottom: 5px; }
+.hand-title { font-size: 13px; font-weight: bold; margin-bottom: 2px; color: #888; display: flex; justify-content: space-between; align-items: center; }
+.preview-text { color: #ffeb3b; font-size: 16px; font-weight: bold; background: #333; padding: 1px 6px; border-radius: 5px; }
+.dice-pool { display: flex; gap: 6px; justify-content: center; margin-bottom: 5px; }
+.die { width: 36px; height: 36px; background: #e0e0e0; color: #121212; font-size: 18px; font-weight: bold; display: flex; justify-content: center; align-items: center; border-radius: 6px; cursor: pointer; transition: transform 0.1s; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.die.held { background: #ffeb3b; transform: translateY(-4px); border: 2px solid #fff; }
+.die.enemy { cursor: default; background: #cfcfcf; }
+.die.targetable { border: 2px solid #4CAF50; box-shadow: 0 0 10px #4CAF50; animation: pulse-green 1s infinite alternate; cursor: crosshair; }
+.die.locked-by-boss { background: #F44336; color: white; cursor: not-allowed; border: 2px solid #b71c1c; }
+.die.locked-by-boss::after { content: '🔒'; position: absolute; font-size: 10px; transform: translate(12px, -12px); }
+@keyframes pulse-green { from { box-shadow: 0 0 5px #4CAF50; } to { box-shadow: 0 0 15px #4CAF50; } }
+.btn-reroll { width: 100%; padding: 6px; background: #444; color: white; border: none; border-radius: 5px; font-size: 11px; cursor: pointer; }
+.btn-reroll:disabled { opacity: 0.3; cursor: not-allowed; }
+.action-buttons { margin-top: 10px; display: flex; gap: 10px; }
+.btn-main { flex: 1; padding: 12px; font-size: 16px; font-weight: bold; color: white; background: #4CAF50; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 3px 5px rgba(0,0,0,0.3); }
+
+/* ---------------- МОДАЛКИ ---------------- */
+#loot-modal, #event-modal, #victory-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; backdrop-filter: blur(3px); }
+.loot-content { background: #1e1e1e; width: 100%; max-width: 320px; border-radius: 15px; padding: 25px; text-align: center; border: 2px solid var(--yellow); box-shadow: 0 0 30px rgba(255, 235, 59, 0.2); }
+.loot-content h2 { color: var(--yellow); margin-top: 0; }
+.loot-item-big { background: #2a2a2a; padding: 20px; border-radius: 10px; margin: 20px 0; border: 1px solid #444; }
+.loot-item-big .icon { font-size: 48px; display: block; margin-bottom: 10px; }
+.loot-item-big .title { font-size: 18px; font-weight: bold; color: #fff; margin-bottom: 10px; }
+.loot-item-big .desc { font-size: 14px; color: #aaa; line-height: 1.4; }
+
+.event-choice-btn { background: #333; color: white; border: 1px solid #555; padding: 12px; border-radius: 8px; font-size: 15px; cursor: pointer; text-align: left; transition: background 0.2s; }
+.event-choice-btn:hover { background: #444; }
+.event-choice-btn:active { background: #555; }
+
+.victory-content { background: #1e1e1e; width: 100%; max-width: 320px; border-radius: 15px; padding: 30px; text-align: center; border: 2px solid var(--green); box-shadow: 0 0 30px rgba(76, 175, 80, 0.3); }
