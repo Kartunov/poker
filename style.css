@@ -16,14 +16,19 @@ body { margin: 0; background-color: var(--bg-color); color: var(--text-color); d
 
 #map-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; }
 #map-grid { display: grid; grid-template-columns: repeat(3, var(--room-size)); grid-template-rows: repeat(4, var(--room-size)); gap: var(--gap); }
-.room { width: var(--room-size); height: var(--room-size); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 24px; border: 2px solid transparent; opacity: 0.2; cursor: not-allowed; transition: opacity 0.3s; }
+
+.room { width: var(--room-size); height: var(--room-size); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 24px; border: 2px solid transparent; cursor: not-allowed; transition: opacity 0.3s; }
 .room.green { background-color: var(--green); } .room.grey { background-color: var(--grey); }
 .room.yellow { background-color: var(--yellow); color: #000; } .room.blue { background-color: var(--blue); }
 .room.purple { background-color: var(--purple); } .room.red { background-color: var(--red); }
-.room.visited { opacity: 1; } .room.available { opacity: 1; border-color: white; cursor: pointer; animation: pulse 1.5s infinite; }
+
+/* Класс для скрытия комнат в тумане войны */
+.room.hidden { visibility: hidden; opacity: 0; }
+
+.room.visited { opacity: 1; } 
+.room.available { opacity: 1; border-color: white; cursor: pointer; animation: pulse 1.5s infinite; }
 .room.current { border-color: white; box-shadow: 0 0 15px white; opacity: 1; cursor: default; }
 .room.locked { opacity: 0.5; cursor: not-allowed; border-color: red; }
-.room.hide-icon { font-size: 0 !important; /* Скрывает иконки по событию со свечой */ }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
 
 #bottom-bar { background: var(--panel-bg); padding: 15px; border-radius: 10px; margin-top: 15px; text-align: center; min-height: 70px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
@@ -85,7 +90,7 @@ body { margin: 0; background-color: var(--bg-color); color: var(--text-color); d
 .hand-title { font-size: 13px; font-weight: bold; margin-bottom: 2px; color: #888; display: flex; justify-content: space-between; align-items: center; }
 .preview-text { color: #ffeb3b; font-size: 16px; font-weight: bold; background: #333; padding: 1px 6px; border-radius: 5px; }
 .dice-pool { display: flex; gap: 6px; justify-content: center; margin-bottom: 5px; }
-.die { width: 36px; height: 36px; background: #e0e0e0; color: #121212; font-size: 18px; font-weight: bold; display: flex; justify-content: center; align-items: center; border-radius: 6px; cursor: pointer; transition: transform 0.1s; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.die { width: 36px; height: 36px; background: #e0e0e0; color: #121212; font-size: 18px; font-weight: bold; display: flex; justify-content: center; align-items: center; border-radius: 6px; cursor: pointer; transition: transform 0.1s; box-shadow: 0 2px 4px rgba(0,0,0,0.5); position: relative; }
 .die.held { background: #ffeb3b; transform: translateY(-4px); border: 2px solid #fff; }
 .die.enemy { cursor: default; background: #cfcfcf; }
 .die.targetable { border: 2px solid #4CAF50; box-shadow: 0 0 10px #4CAF50; animation: pulse-green 1s infinite alternate; cursor: crosshair; }
