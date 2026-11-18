@@ -1,188 +1,276 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тест Покера (Математика)</title>
-    <style>
-        body {
-            background-color: #121212;
-            color: #e0e0e0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            user-select: none;
-        }
-        .dice-pool {
-            display: flex;
-            gap: 10px;
-            margin: 30px 0;
-        }
-        .die {
-            width: 60px;
-            height: 60px;
-            background: #e0e0e0;
-            color: #121212;
-            font-size: 32px;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: transform 0.1s, background 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        .die.held {
-            background: #ffeb3b;
-            color: #121212;
-            transform: translateY(-10px);
-            box-shadow: 0 10px 15px rgba(255, 235, 59, 0.3);
-            border: 2px solid #fff;
-        }
-        button {
-            padding: 15px 30px;
-            font-size: 18px;
-            cursor: pointer;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            transition: background 0.2s;
-        }
-        button:hover { background: #45a049; }
-        .result {
-            background: #1e1e1e;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 30px;
-            text-align: center;
-            width: 100%;
-            max-width: 350px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            border: 1px solid #333;
-        }
-        .result p { margin: 8px 0; font-size: 16px; }
-        .combo-name { color: #2196F3; font-weight: bold; font-size: 24px; text-transform: uppercase; }
-        .total { color: #ffeb3b; font-weight: bold; font-size: 28px; }
-        .formula { font-size: 14px; color: #888; margin-top: 10px; }
-    </style>
+<meta charset="utf-8">
+<title>Годовой учебный план-график. 8 класс. 102 урока</title>
+<style>
+  body{
+    font-family:'Times New Roman', serif;
+    background:#f3f4f6;
+    margin:0;
+    padding:24px;
+    color:#111;
+  }
+  .wrap{
+    background:#fff;
+    padding:24px 28px 32px;
+    border-radius:8px;
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
+    overflow-x:auto;
+  }
+  h1{
+    font-size:18px;
+    margin:0 0 6px;
+    font-weight:bold;
+  }
+  .note{
+    font-size:13px;
+    color:#444;
+    margin:0 0 18px;
+    line-height:1.45;
+  }
+
+  table.plan{
+    border-collapse:collapse;
+    margin-bottom:26px;
+    font-size:11px;
+  }
+  table.plan th,
+  table.plan td{
+    border:1px solid #555;
+    padding:0;
+    text-align:center;
+    vertical-align:middle;
+    height:20px;
+  }
+  table.plan th.rh{
+    background:#e8e8e8;
+    font-weight:bold;
+    padding:2px 6px;
+  }
+  table.plan th.q{
+    background:#dbe5f1;
+    font-weight:bold;
+    padding:2px 0;
+    height:20px;
+  }
+  table.plan th.num{
+    background:#f4f4f4;
+    font-weight:normal;
+    font-size:10px;
+    width:20px;
+    min-width:20px;
+  }
+  table.plan td.name{
+    text-align:left;
+    white-space:nowrap;
+    padding:0 6px;
+  }
+  table.plan td.hours{
+    font-weight:bold;
+    width:44px;
+    min-width:44px;
+  }
+  table.plan td.c{
+    width:20px;
+    min-width:20px;
+    font-size:11px;
+  }
+  table.plan tr.theory td.name{
+    font-size:10px;
+    line-height:1.15;
+    white-space:normal;
+    min-width:150px;
+  }
+  table.plan tr.theory td.t{
+    background:#fff2cc;
+    font-weight:bold;
+    color:#8a6d00;
+  }
+
+  .legend{
+    font-size:12px;
+    color:#333;
+    margin:0 0 22px;
+    line-height:1.6;
+  }
+
+  button#dl{
+    background:#1f6feb;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    padding:12px 22px;
+    font-size:15px;
+    font-family:inherit;
+    cursor:pointer;
+    box-shadow:0 2px 6px rgba(31,111,235,.35);
+  }
+  button#dl:hover{ background:#1858c4; }
+  button#dl:active{ transform:translateY(1px); }
+</style>
 </head>
 <body>
-    <h1>Тест Ядра Покера</h1>
-    <p style="color: #888; text-align: center; max-width: 400px;">
-        Кликни по кубику, чтобы <b>оставить</b> его (он подсветится желтым). Остальные перебросятся.
-    </p>
-    
-    <div class="dice-pool" id="dice-pool"></div>
-    <button onclick="rollDice()">Бросить кубики</button>
+<div class="wrap">
 
-    <div class="result" id="result">
-        <p>Нажмите "Бросить"</p>
-    </div>
+  <h1>Годовой учебный план-график. 8 класс. 102 урока</h1>
+  <p class="note">
+    Теоретический раздел (21 ч) идёт <b>параллельно</b> основным блокам и в 102 урока не входит:
+    по 3 урока в начале каждого блока. Буква «Т» в строке теории — урок с теоретической составляющей.
+  </p>
 
-    <script>
-        let dice = [1, 1, 1, 1, 1];
-        let holds = [false, false, false, false, false];
+  <div id="tables"></div>
 
-        function renderDice() {
-            const pool = document.getElementById('dice-pool');
-            pool.innerHTML = '';
-            for (let i = 0; i < 5; i++) {
-                const die = document.createElement('div');
-                die.className = 'die';
-                if (holds[i]) die.classList.add('held');
-                die.innerText = dice[i];
-                die.onclick = () => toggleHold(i);
-                pool.appendChild(die);
-            }
-        }
+  <p class="legend">
+    Итого: 15 + 15 + 15 + 15 + 14 + 14 + 14 = <b>102 урока</b>.<br>
+    I четверть — уроки 1–24, II четверть — 25–48, III четверть — 49–78, IV четверть — 79–102.<br>
+    Лыжная подготовка полностью размещена в III четверти (уроки 61–74).
+  </p>
 
-        function toggleHold(index) {
-            holds[index] = !holds[index];
-            renderDice();
-        }
+  <button id="dl">Скачать в Word (.doc)</button>
+</div>
 
-        function rollDice() {
-            for (let i = 0; i < 5; i++) {
-                if (!holds[i]) {
-                    dice[i] = Math.floor(Math.random() * 6) + 1;
-                }
-            }
-            renderDice();
-            calculateResult();
-        }
+<script>
+/* ---------- Данные ---------- */
+const SECTIONS = [
+  { name:'Лёгкая атлетика',      hours:15, start:1  },
+  { name:'Баскетбол',            hours:15, start:16 },
+  { name:'Волейбол',             hours:15, start:31 },
+  { name:'Футбол',               hours:15, start:46 },
+  { name:'Лыжная подготовка',    hours:14, start:61 },
+  { name:'Элементы единоборств', hours:14, start:75 },
+  { name:'Плавание',             hours:14, start:89 }
+];
 
-        function calculateResult() {
-            // 1. Считаем сколько раз выпало каждое число
-            let counts = {};
-            dice.forEach(d => counts[d] = (counts[d] || 0) + 1);
-            
-            let countsArray = Object.values(counts).sort((a, b) => b - a);
-            let values = Object.keys(counts).map(Number).sort((a, b) => a - b);
-            
-            let result = { name: 'Пустая', points: 0, diceSum: 0, total: 0 };
+/* Уроки с теоретической составляющей (параллельно, по 3 в начале блока) */
+const THEORY = new Set([
+  1,2,3,      16,17,18,   31,32,33,   46,47,48,
+  61,62,63,   75,76,77,   89,90,91
+]);
 
-            // Проверяем комбинации от старшей к младшей
-            if (countsArray[0] === 5) {
-                // ПОКЕР (5 одинаковых)
-                let val = values[0];
-                let sum = val * 5;
-                result = { name: 'Покер', points: 15, diceSum: sum, total: Math.ceil(sum / 2) + 15 };
-            } 
-            else if (countsArray[0] === 4) {
-                // КАРЕ (4 одинаковых)
-                let val = values.find(v => counts[v] === 4);
-                let sum = val * 4; // Мусорная кость не считается
-                result = { name: 'Каре', points: 13, diceSum: sum, total: Math.ceil(sum / 2) + 13 };
-            }
-            else if (countsArray[0] === 3 && countsArray[1] === 2) {
-                // ФУЛЛ-ХАУС (3 + 2)
-                let sum = dice.reduce((a, b) => a + b, 0); // Суммируются все 5
-                result = { name: 'Фулл-хаус', points: 8, diceSum: sum, total: Math.ceil(sum / 2) + 8 };
-            }
-            else if (values.length === 5 && values[4] - values[0] === 4) {
-                // СТРИТ (5 подряд: 12345 или 23456)
-                let sum = dice.reduce((a, b) => a + b, 0); // Суммируются все 5
-                result = { name: 'Стрит', points: 10, diceSum: sum, total: Math.ceil(sum / 2) + 10 };
-            }
-            else if (countsArray[0] === 3) {
-                // СЕТ (3 одинаковых)
-                let val = values.find(v => counts[v] === 3);
-                let sum = val * 3;
-                result = { name: 'Сет', points: 6, diceSum: sum, total: Math.ceil(sum / 2) + 6 };
-            }
-            else if (countsArray[0] === 2 && countsArray[1] === 2) {
-                // ДВЕ ПАРЫ
-                let sum = 0;
-                values.forEach(v => {
-                    if (counts[v] === 2) sum += v * 2;
-                });
-                result = { name: 'Две пары', points: 4, diceSum: sum, total: Math.ceil(sum / 2) + 4 };
-            }
-            else if (countsArray[0] === 2) {
-                // ПАРА
-                let val = values.find(v => counts[v] === 2);
-                let sum = val * 2;
-                result = { name: 'Пара', points: 2, diceSum: sum, total: Math.ceil(sum / 2) + 2 };
-            }
+/* ---------- Построение одной таблицы ---------- */
+function renderTable(from, to, quarters) {
+  const total = to - from + 1;
+  let h = '<table class="plan">';
 
-            // Выводим результат на экран
-            document.getElementById('result').innerHTML = `
-                <p class="combo-name">${result.name}</p>
-                <p>Сумма подходящих кубиков: <b>${result.diceSum}</b></p>
-                <p>Баллы за комбинацию: <b>+${result.points}</b></p>
-                <p class="formula">Формула: (${result.diceSum} / 2) + ${result.points} = ${result.total}</p>
-                <p class="total">Итого: ${result.total}</p>
-            `;
-        }
+  /* Шапка: строка 1 */
+  h += '<tr>';
+  h += '<th class="rh" rowspan="2">Учебный материал</th>';
+  h += '<th class="rh" rowspan="2">Кол-во<br>часов</th>';
+  quarters.forEach(q => {
+    h += '<th class="q" colspan="' + q.span + '">' + q.label + '</th>';
+  });
+  h += '</tr>';
 
-        // Первый рендер
-        renderDice();
-    </script>
+  /* Шапка: строка 2 — номера уроков */
+  h += '<tr>';
+  for (let i = from; i <= to; i++) {
+    h += '<th class="num">' + i + '</th>';
+  }
+  h += '</tr>';
+
+  /* Строки разделов */
+  SECTIONS.forEach(s => {
+    h += '<tr>';
+    h += '<td class="name">' + s.name + '</td>';
+    h += '<td class="hours">' + s.hours + '</td>';
+    for (let i = from; i <= to; i++) {
+      if (i >= s.start && i < s.start + s.hours) {
+        h += '<td class="c">' + (i - s.start + 1) + '</td>';
+      } else {
+        h += '<td class="c"></td>';
+      }
+    }
+    h += '</tr>';
+  });
+
+  /* Строка теории (параллельно) */
+  h += '<tr class="theory">';
+  h += '<td class="name">Теоретический раздел<br>(параллельно, в 102 ч. не входит)</td>';
+  h += '<td class="hours">21</td>';
+  for (let i = from; i <= to; i++) {
+    if (THEORY.has(i)) {
+      h += '<td class="c t">Т</td>';
+    } else {
+      h += '<td class="c"></td>';
+    }
+  }
+  h += '</tr>';
+
+  h += '</table>';
+  return h;
+}
+
+/* ---------- Сборка страницы ---------- */
+(function build() {
+  let html = '';
+
+  /* Верхняя часть: I + II четверти (уроки 1–48) */
+  html += renderTable(1, 48, [
+    { label:'I Четверть',  span:24 },
+    { label:'II Четверть', span:24 }
+  ]);
+
+  /* Нижняя часть: III + IV четверти (уроки 49–102) */
+  html += renderTable(49, 102, [
+    { label:'III Четверть', span:30 },
+    { label:'IV Четверть',  span:24 }
+  ]);
+
+  document.getElementById('tables').innerHTML = html;
+})();
+
+/* ---------- Экспорт в Word ---------- */
+document.getElementById('dl').addEventListener('click', function () {
+  const content = document.getElementById('tables').innerHTML;
+
+  const style = ''
+    + '@page { size: A4 landscape; margin: 1cm; }'
+    + 'body { font-family: "Times New Roman", serif; font-size: 9pt; }'
+    + 'h1 { font-size: 14pt; }'
+    + 'table.plan { border-collapse: collapse; margin-bottom: 14pt; }'
+    + 'table.plan th, table.plan td {'
+    +   ' border: 0.5pt solid #000; padding: 0; height: 14pt;'
+    +   ' text-align: center; vertical-align: middle; font-size: 7pt; }'
+    + 'table.plan th.rh { background: #e8e8e8; font-weight: bold; padding: 1pt 3pt; }'
+    + 'table.plan th.q { background: #dbe5f1; font-weight: bold; }'
+    + 'table.plan th.num { background: #f4f4f4; font-weight: normal; font-size: 6.5pt; }'
+    + 'table.plan td.name { text-align: left; padding: 0 3pt; font-size: 7.5pt; }'
+    + 'table.plan td.hours { font-weight: bold; }'
+    + 'table.plan tr.theory td.name { font-size: 6.5pt; }'
+    + 'table.plan tr.theory td.t { background: #fff2cc; font-weight: bold; }'
+    + 'p { font-size: 8pt; }';
+
+  const doc = ''
+    + '<html xmlns:o="urn:schemas-microsoft-com:office:office"'
+    + ' xmlns:w="urn:schemas-microsoft-com:office:word"'
+    + ' xmlns="http://www.w3.org/TR/REC-html40">'
+    + '<head><meta charset="utf-8">'
+    + '<title>Годовой учебный план-график</title>'
+    + '<!--[if gte mso 9]><xml><w:WordDocument>'
+    + '<w:View>Print</w:View><w:Zoom>100</w:Zoom>'
+    + '</w:WordDocument></xml><![endif]-->'
+    + '<style>' + style + '</style>'
+    + '</head><body>'
+    + '<h1>Годовой учебный план-график. 8 класс. 102 урока</h1>'
+    + content
+    + '<p>Теоретический раздел (21 ч) идёт параллельно основным блокам и в 102 урока не входит. '
+    + 'Буква «Т» — урок с теоретической составляющей.</p>'
+    + '<p>Итого: 15 + 15 + 15 + 15 + 14 + 14 + 14 = 102 урока. '
+    + 'Лыжная подготовка полностью размещена в III четверти (уроки 61–74).</p>'
+    + '</body></html>';
+
+  const blob = new Blob(['\ufeff', doc], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'План-график_8класс_102урока.doc';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+});
+</script>
 </body>
 </html>
