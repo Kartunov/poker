@@ -1,361 +1,209 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
-<title>Примерная дополнительная образовательная программа спортивной подготовки по виду спорта «пауэрлифтинг»</title>
-<style>
-  body { font-family: 'Times New Roman', serif; background: #eef1f5; margin: 0; padding: 20px; color: #111; }
-  .wrap { background: #fff; padding: 24px 28px 32px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
-
-  h1 { font-size: 16px; text-align: center; margin: 0 0 6px; line-height: 1.25; }
-  h2 { font-size: 13px; margin: 18px 0 8px; }
-  h3 { font-size: 12px; margin: 14px 0 6px; }
-  p  { font-size: 11.5px; line-height: 1.45; margin: 0 0 8px; text-align: justify; }
-  .center { text-align: center; }
-  .small { font-size: 10.5px; color: #444; }
-
-  table.plan {
-    border-collapse: collapse;
-    width: 100%;
-    table-layout: fixed;
-    margin-bottom: 14px;
-    font-size: 10px;
-  }
-  table.plan th, table.plan td {
-    border: 1px solid #333;
-    padding: 3px 4px;
-    vertical-align: top;
-    line-height: 1.25;
-  }
-  table.plan th {
-    background: #e8e8e8;
-    font-weight: bold;
-    text-align: center;
-    vertical-align: middle;
-  }
-  table.plan td.center { text-align: center; vertical-align: middle; }
-  table.plan tr.section td {
-    background: #f0f0f0;
-    font-weight: bold;
-    text-align: center;
-  }
-  table.plan ul { margin: 2px 0 2px 14px; padding: 0; }
-  table.plan li { margin-bottom: 1px; }
-
-  .legend { font-size: 10.5px; color: #333; line-height: 1.5; margin: 6px 0 16px; }
-  button { background: #1f6feb; color: #fff; border: 0; border-radius: 6px;
-           padding: 12px 24px; font-size: 14px; font-family: inherit; cursor: pointer; }
-  button:hover { background: #1858c4; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Компилятор приключений</title>
+  <!-- Подключаем pdfmake для генерации PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 15px; }
+    .block { border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 5px; background: #f9f9f9; }
+    .block input[type="text"] { width: 100%; margin-bottom: 5px; padding: 5px; font-size: 16px; }
+    .block textarea { width: 100%; padding: 5px; font-size: 14px; resize: vertical; }
+    .block button { background: #e74c3c; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; margin-top: 5px; }
+    .block button:hover { background: #c0392b; }
+    .toolbar { margin: 15px 0; }
+    .toolbar button { padding: 8px 15px; margin-right: 10px; cursor: pointer; }
+    .doc-meta { margin-bottom: 20px; }
+    .doc-meta label { display: block; margin-top: 10px; font-weight: bold; }
+    .doc-meta input, .doc-meta textarea { width: 100%; padding: 5px; font-size: 14px; }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Примерная дополнительная образовательная программа<br>спортивной подготовки по виду спорта «пауэрлифтинг»</h1>
-  <p class="center small">(разработана на основе федерального стандарта спортивной подготовки по виду спорта «пауэрлифтинг», утв. приказом Минспорта России от 14.08.2025 № 654)</p>
+  <h1>Компилятор приключений</h1>
 
-  <div id="content"></div>
+  <div class="doc-meta">
+    <label>Название приключения:</label>
+    <input type="text" id="docTitle" value="Название приключения" placeholder="Введите название...">
+    <label>Краткая информация (для титульного листа):</label>
+    <textarea id="docInfo" rows="2" placeholder="Автор, дата, описание...">Краткое описание</textarea>
+  </div>
 
-  <p class="legend">
-    <b>Условные обозначения:</b> ФССП — федеральный стандарт спортивной подготовки; ОФП — общая физическая подготовка; СФП — специальная физическая подготовка; УТЭ — учебно-тренировочный этап; ЭССМ — этап совершенствования спортивного мастерства; ЭВСМ — этап высшего спортивного мастерства.
-  </p>
+  <div class="toolbar">
+    <button onclick="addBlock('h1')">➕ Добавить заголовок</button>
+    <button onclick="addBlock('h2')">➕ Добавить подзаголовок</button>
+  </div>
 
-  <button id="dl">Скачать в Word (.doc)</button>
-</div>
+  <div id="blocksContainer"></div>
 
-<script>
-/* ---------- Содержимое программы ---------- */
-function renderContent() {
-  return `
-<h2>I. Общие положения</h2>
-<p>1. Дополнительная образовательная программа спортивной подготовки по виду спорта «пауэрлифтинг» (далее — Программа) предназначена для организации образовательной деятельности по спортивной подготовке с учетом совокупности минимальных требований к спортивной подготовке, определенных федеральным стандартом спортивной подготовки по виду спорта «пауэрлифтинг», утвержденным приказом Минспорта России от 14 августа 2025 г. № 654 (далее — ФССП).</p>
-<p>2. Целью Программы является достижение спортивных результатов на основе соблюдения спортивных и педагогических принципов в учебно-тренировочном процессе в условиях многолетнего, круглогодичного и поэтапного процесса спортивной подготовки.</p>
+  <div class="toolbar" style="margin-top: 30px;">
+    <button onclick="exportWord()">📄 Выгрузить Word (.doc)</button>
+    <button onclick="exportPDF()">📕 Выгрузить PDF</button>
+  </div>
 
-<h2>II. Характеристика дополнительной образовательной программы спортивной подготовки</h2>
-<p>3. Сроки реализации этапов спортивной подготовки и возрастные границы лиц, проходящих спортивную подготовку, количество лиц, проходящих спортивную подготовку в группах на этапах спортивной подготовки (приложение № 1 к ФССП):</p>
+  <script>
+    let blockId = 0;
 
-<table class="plan">
-  <colgroup><col style="width:24%"><col style="width:18%"><col style="width:20%"><col style="width:18%"><col style="width:20%"></colgroup>
-  <tr>
-    <th>Этапы спортивной подготовки</th>
-    <th>Срок реализации этапов (лет)</th>
-    <th>Возрастные границы (лет)</th>
-    <th>Наполняемость (человек)</th>
-    <th>Примечание</th>
-  </tr>
-  <tr>
-    <td>Этап начальной подготовки</td>
-    <td class="center">2</td>
-    <td class="center">10</td>
-    <td class="center">8</td>
-    <td>—</td>
-  </tr>
-  <tr>
-    <td>Учебно-тренировочный этап (этап спортивной специализации)</td>
-    <td class="center">4–5</td>
-    <td class="center">12</td>
-    <td class="center">6</td>
-    <td>—</td>
-  </tr>
-  <tr>
-    <td>Этап совершенствования спортивного мастерства</td>
-    <td class="center">не ограничивается</td>
-    <td class="center">16</td>
-    <td class="center">3</td>
-    <td>—</td>
-  </tr>
-  <tr>
-    <td>Этап высшего спортивного мастерства</td>
-    <td class="center">не ограничивается</td>
-    <td class="center">17</td>
-    <td class="center">1</td>
-    <td>—</td>
-  </tr>
-</table>
+    // Добавление блока
+    function addBlock(type) {
+      const container = document.getElementById('blocksContainer');
+      const div = document.createElement('div');
+      div.className = 'block';
+      div.dataset.type = type;
+      div.dataset.id = blockId++;
+      div.innerHTML = `
+        <input type="text" class="block-title" placeholder="${type === 'h1' ? 'Заголовок' : 'Подзаголовок'}">
+        <textarea class="block-content" rows="5" placeholder="Текст... (переносы строк сохранятся как абзацы)"></textarea>
+        <button onclick="this.parentElement.remove()">Удалить блок</button>
+      `;
+      container.appendChild(div);
+    }
 
-<p>4. Объем Программы (приложение № 2 к ФССП):</p>
-<table class="plan">
-  <colgroup><col style="width:24%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:16%"></colgroup>
-  <tr>
-    <th rowspan="2">Этапный норматив</th>
-    <th colspan="2">Этап начальной подготовки</th>
-    <th colspan="2">Учебно-тренировочный этап (этап спортивной специализации)</th>
-    <th rowspan="2">Этап совершенствования спортивного мастерства</th>
-    <th rowspan="2">Этап высшего спортивного мастерства</th>
-  </tr>
-  <tr>
-    <th>До года</th>
-    <th>Свыше года</th>
-    <th>До трёх лет</th>
-    <th>Свыше трёх лет</th>
-  </tr>
-  <tr>
-    <td>Количество часов в неделю</td>
-    <td class="center">4,5–6</td>
-    <td class="center">6–8</td>
-    <td class="center">10–14</td>
-    <td class="center">14–18</td>
-    <td class="center">20–24</td>
-    <td class="center">24–32</td>
-  </tr>
-  <tr>
-    <td>Общее количество часов в год</td>
-    <td class="center">234–312</td>
-    <td class="center">312–416</td>
-    <td class="center">520–728</td>
-    <td class="center">728–936</td>
-    <td class="center">1040–1248</td>
-    <td class="center">1248–1664</td>
-  </tr>
-</table>
+    // Сбор данных со страницы
+    function collectData() {
+      const title = document.getElementById('docTitle').value;
+      const info = document.getElementById('docInfo').value;
+      const blocks = [];
+      document.querySelectorAll('#blocksContainer .block').forEach(div => {
+        const type = div.dataset.type;
+        const titleVal = div.querySelector('.block-title').value.trim();
+        const content = div.querySelector('.block-content').value;
+        blocks.push({ type, title: titleVal, content });
+      });
+      return { title, info, blocks };
+    }
 
-<p>5. Виды (формы) обучения, применяющиеся при реализации Программы: учебно-тренировочные занятия (групповые, индивидуальные), учебно-тренировочные мероприятия (приложение № 3 к ФССП), спортивные соревнования (приложение № 4 к ФССП).</p>
+    // === Генерация Word (HTML-файл .doc) ===
+    function exportWord() {
+      const data = collectData();
 
-<p>6. Годовой учебно-тренировочный план (приложения № 2 и № 5 к ФССП) приведен в приложении № 1 к Программе.</p>
-<p>7. Календарный план воспитательной работы приведен в приложении № 2 к Программе.</p>
-<p>8. План мероприятий, направленный на предотвращение допинга в спорте и борьбу с ним, приведен в приложении № 3 к Программе.</p>
-<p>9. Планы инструкторской и судейской практики разрабатываются организацией по этапам спортивной подготовки.</p>
-<p>10. Планы медицинских, медико-биологических мероприятий и применения восстановительных средств разрабатываются по этапам и годам спортивной подготовки.</p>
+      let html = `
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: 'Times New Roman', serif; margin: 2cm; }
+            h1 { font-size: 24pt; margin-top: 30pt; }
+            h2 { font-size: 18pt; margin-top: 20pt; }
+            .title-page { text-align: center; margin-top: 150px; }
+            .title-page h1 { font-size: 36pt; border: none; }
+            .title-page p { font-size: 16pt; }
+            .toc { margin-top: 50px; }
+            .toc h2 { font-size: 22pt; border-bottom: 1px solid #000; padding-bottom: 5px; }
+            .toc ul { list-style: none; padding-left: 0; }
+            .toc li { margin-bottom: 8px; font-size: 14pt; }
+            .content { margin-top: 50px; }
+            p { margin: 5px 0; font-size: 12pt; text-align: justify; }
+          </style>
+        </head>
+        <body>
+          <div class="title-page">
+            <h1>${data.title}</h1>
+            <p>${data.info.replace(/\n/g, '<br>')}</p>
+          </div>
+          <div class="toc">
+            <h2>Содержание</h2>
+            <ul>
+      `;
 
-<h2>III. Система контроля</h2>
-<p>11. По итогам освоения Программы применительно к этапам спортивной подготовки обучающийся должен выполнить следующие требования к результатам прохождения Программы, в том числе к участию в спортивных соревнованиях:</p>
-<p><b>11.1. На этапе начальной подготовки:</b> изучить основы безопасного поведения при занятиях спортом; повысить уровень физической подготовленности; овладеть основами техники вида спорта «пауэрлифтинг»; получить общие знания об антидопинговых правилах; соблюдать антидопинговые правила; принять участие в официальных спортивных соревнованиях; ежегодно выполнять контрольно-переводные нормативы (испытания); получить уровень спортивной квалификации, необходимый для зачисления и перевода на учебно-тренировочный этап.</p>
-<p><b>11.2. На учебно-тренировочном этапе (этапе спортивной специализации):</b> повышать уровень физической, технической, тактической, теоретической и психологической подготовленности; изучить правила безопасности при занятиях пауэрлифтингом и применять их; соблюдать режим учебно-тренировочных занятий; изучить основные методы саморегуляции и самоконтроля; овладеть общими теоретическими знаниями о правилах вида спорта; изучить антидопинговые правила и соблюдать их; ежегодно выполнять контрольно-переводные нормативы; принимать участие в официальных соревнованиях не ниже уровня муниципального образования (на первом–третьем году) и не ниже уровня субъекта РФ (начиная с четвёртого года); получить спортивный разряд, необходимый для перевода на следующий этап.</p>
-<p><b>11.3. На этапе совершенствования спортивного мастерства:</b> повышать уровень подготовленности; соблюдать режим занятий, восстановления и питания; приобрести знания и навыки оказания первой доврачебной помощи; овладеть теоретическими знаниями о правилах вида спорта; выполнить план индивидуальной подготовки; закрепить знания антидопинговых правил; ежегодно выполнять контрольно-переводные нормативы; демонстрировать высокие спортивные результаты; показывать результаты не ниже КМС не реже одного раза в два года; участвовать в соревнованиях не ниже межрегионального уровня; получить спортивное звание, необходимое для перевода на этап высшего спортивного мастерства.</p>
-<p><b>11.4. На этапе высшего спортивного мастерства:</b> совершенствовать все виды подготовленности; соблюдать режим; выполнить индивидуальный план; знать и соблюдать антидопинговые правила; ежегодно выполнять нормативы; участвовать во всероссийских соревнованиях; показывать результаты уровня МС России или МСМК не реже одного раза в два года; достичь результатов уровня сборной команды субъекта РФ и (или) сборной команды РФ.</p>
+      // Оглавление: только заголовки (h1)
+      data.blocks.forEach(block => {
+        if (block.type === 'h1') {
+          html += `<li>${block.title || '(без названия)'}</li>`;
+        }
+      });
 
-<p>12. Оценка результатов освоения Программы сопровождается аттестацией обучающихся на основе разработанных комплексов контрольных упражнений, тестов, а также с учётом результатов участия в соревнованиях.</p>
+      html += `
+            </ul>
+          </div>
+          <div class="content">
+      `;
 
-<p>13. Контрольные и контрольно-переводные нормативы по видам подготовки (приложения № 6–9 к ФССП). Основные нормативы для зачисления и перевода:</p>
+      // Содержимое
+      data.blocks.forEach(block => {
+        if (block.type === 'h1') {
+          html += `<h1>${block.title || '(без названия)'}</h1>`;
+        } else {
+          html += `<h2>${block.title || '(без названия)'}</h2>`;
+        }
+        // Разбиваем текст на абзацы
+        const paragraphs = block.content.split('\n').filter(p => p.trim() !== '');
+        paragraphs.forEach(p => {
+          html += `<p>${p}</p>`;
+        });
+      });
 
-<h3>13.1. Нормативы для зачисления и перевода на этап начальной подготовки (приложение № 6 к ФССП)</h3>
-<table class="plan">
-  <colgroup><col style="width:40%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:12%"></colgroup>
-  <tr>
-    <th rowspan="2">Упражнения</th>
-    <th rowspan="2">Ед. изм.</th>
-    <th colspan="2">До года обучения</th>
-    <th colspan="2">Свыше года обучения</th>
-  </tr>
-  <tr>
-    <th>мальчики</th><th>девочки</th><th>мальчики</th><th>девочки</th>
-  </tr>
-  <tr><td colspan="6" class="section">Нормативы общей физической подготовки</td></tr>
-  <tr><td>Бег на 30 м</td><td class="center">с</td><td class="center">не более 6,3</td><td class="center">не более 6,5</td><td class="center">не более 5,9</td><td class="center">не более 6,1</td></tr>
-  <tr><td>Подтягивание из виса лежа на низкой перекладине 90 см</td><td class="center">раз</td><td class="center">не менее 8</td><td class="center">не менее 7</td><td class="center">не менее 13</td><td class="center">не менее 10</td></tr>
-  <tr><td>Прыжок в длину с места толчком двумя ногами</td><td class="center">см</td><td class="center">не менее 128</td><td class="center">не менее 118</td><td class="center">не менее 142</td><td class="center">не менее 132</td></tr>
-  <tr><td>Поднимание туловища из положения лежа на спине (за 1 мин)</td><td class="center">раз</td><td class="center">не менее 26</td><td class="center">не менее 23</td><td class="center">не менее 33</td><td class="center">не менее 28</td></tr>
-  <tr><td>Сгибание и разгибание рук в упоре лежа на полу</td><td class="center">раз</td><td class="center">не менее 10</td><td class="center">не менее 5</td><td class="center">не менее 13</td><td class="center">не менее 7</td></tr>
-  <tr><td colspan="6" class="section">Нормативы специальной физической подготовки</td></tr>
-  <tr><td>Стойка на одной ноге, глаза закрыты, руки скрещены, ладони на плечах</td><td class="center">с</td><td class="center">не менее 7,0</td><td class="center">не менее 7,0</td><td class="center">не менее 8,0</td><td class="center">не менее 8,0</td></tr>
-  <tr><td>Приседание, ладони на затылке</td><td class="center">раз</td><td class="center">не менее 10</td><td class="center">не менее 5</td><td class="center">не менее 15</td><td class="center">не менее 10</td></tr>
-</table>
+      html += `
+          </div>
+        </body>
+        </html>
+      `;
 
-<h3>13.2. Нормативы для зачисления и перевода на учебно-тренировочный этап (приложение № 7 к ФССП)</h3>
-<table class="plan">
-  <colgroup><col style="width:50%"><col style="width:14%"><col style="width:18%"><col style="width:18%"></colgroup>
-  <tr><th>Упражнения</th><th>Ед. изм.</th><th>Юноши</th><th>Девушки</th></tr>
-  <tr><td colspan="4" class="section">Нормативы общей физической подготовки</td></tr>
-  <tr><td>Бег на 30 м</td><td class="center">с</td><td class="center">не более 5,4</td><td class="center">не более 5,7</td></tr>
-  <tr><td>Подтягивание из виса лежа на низкой перекладине 90 см</td><td class="center">раз</td><td class="center">не менее 16</td><td class="center">не менее 12</td></tr>
-  <tr><td>Сгибание и разгибание рук в упоре лежа на полу</td><td class="center">раз</td><td class="center">не менее 18</td><td class="center">не менее 9</td></tr>
-  <tr><td>Прыжок в длину с места толчком двумя ногами</td><td class="center">см</td><td class="center">не менее 162</td><td class="center">не менее 147</td></tr>
-  <tr><td>Поднимание туловища из положения лежа на спине (за 1 мин)</td><td class="center">раз</td><td class="center">не менее 37</td><td class="center">не менее 31</td></tr>
-  <tr><td colspan="4" class="section">Нормативы специальной физической подготовки</td></tr>
-  <tr><td>Приседание со штангой на плечах (вес штанги — 70% от повторного максимума)</td><td class="center">раз</td><td class="center" colspan="2">не менее 8</td></tr>
-  <tr><td>Жим лежа (вес штанги — 70% от повторного максимума)</td><td class="center">раз</td><td class="center" colspan="2">не менее 8</td></tr>
-  <tr><td>Становая тяга (вес штанги — 70% от повторного максимума)</td><td class="center">раз</td><td class="center" colspan="2">не менее 6</td></tr>
-</table>
-<p class="small">Уровень спортивной квалификации: на первом году обучения не устанавливается; на втором–третьем году — третий, второй или первый юношеский спортивный разряд; свыше трёх лет — третий, второй или первый спортивный разряд.</p>
+      const blob = new Blob([html], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'document.doc';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
 
-<h2>IV. Рабочая программа по виду спорта</h2>
-<p>14. Программный материал для учебно-тренировочных занятий по каждому этапу спортивной подготовки включает разделы общей и специальной физической подготовки, технической, тактической, теоретической и психологической подготовки, а также инструкторской и судейской практики.</p>
-<p>15. Учебно-тематический план (приложение № 4 к Примерной программе) приведен в приложении № 4 к настоящей Программе.</p>
+    // === Генерация PDF через pdfmake ===
+    function exportPDF() {
+      const data = collectData();
 
-<h2>V. Особенности осуществления спортивной подготовки по отдельным спортивным дисциплинам</h2>
-<p>16. К особенностям осуществления спортивной подготовки по спортивным дисциплинам вида спорта «пауэрлифтинг» относятся: учет весовых категорий, различия в технике выполнения соревновательных упражнений (приседание, жим лежа, становая тяга), использование специализированного оборудования и инвентаря (помост, штанга, грифы, диски, стойки), обеспечение безопасности при работе с отягощениями.</p>
+      // Формируем content для pdfmake
+      const content = [];
 
-<h2>VI. Условия реализации дополнительной образовательной программы спортивной подготовки</h2>
-<p>17. Материально-технические условия: тренировочный зал, помост для пауэрлифтинга, штанги с набором дисков, грифы для пауэрлифтинга с замками, стойки для приседаний, скамьи для жима, весы, зеркала, гимнастические скамейки, резиновые эспандеры и иной инвентарь в соответствии с приложениями № 10–11 к ФССП.</p>
-<p>18. Кадровые условия: укомплектованность организации педагогическими и иными работниками; уровень квалификации тренеров-преподавателей должен соответствовать требованиям ФССП; обеспечивается непрерывность профессионального развития.</p>
-<p>19. Информационно-методические условия: наличие учебной и методической литературы, цифровых образовательных ресурсов, доступ к информационно-методическому обеспечению.</p>
+      // 1. Титульный лист
+      content.push({ text: data.title, style: 'title', alignment: 'center', margin: [0, 120, 0, 20] });
+      content.push({ text: data.info, style: 'subtitle', alignment: 'center' });
+      content.push({ text: '', pageBreak: 'after' }); // разрыв страницы
 
-<h2>Приложение № 1. Годовой учебно-тренировочный план</h2>
-<p class="small">(составлен с учётом приложений № 2 и № 5 к ФССП; указаны примерные диапазоны часов в год)</p>
-<table class="plan">
-  <colgroup><col style="width:26%"><col style="width:14%"><col style="width:14%"><col style="width:14%"><col style="width:14%"><col style="width:18%"></colgroup>
-  <tr>
-    <th>Виды подготовки и иные мероприятия</th>
-    <th>Этап начальной подготовки до года</th>
-    <th>Этап начальной подготовки свыше года</th>
-    <th>УТЭ до трёх лет</th>
-    <th>УТЭ свыше трёх лет</th>
-    <th>ЭССМ / ЭВСМ</th>
-  </tr>
-  <tr><td>Общая физическая подготовка</td><td class="center">47–78</td><td class="center">62–104</td><td class="center">78–146</td><td class="center">109–187</td><td class="center">208–312</td></tr>
-  <tr><td>Специальная физическая подготовка</td><td class="center">59–94</td><td class="center">94–146</td><td class="center">182–291</td><td class="center">306–440</td><td class="center">468–686</td></tr>
-  <tr><td>Участие в спортивных соревнованиях</td><td class="center">12–22</td><td class="center">16–62</td><td class="center">26–146</td><td class="center">36–187</td><td class="center">42–250</td></tr>
-  <tr><td>Техническая подготовка</td><td class="center">23–62</td><td class="center">31–83</td><td class="center">52–109</td><td class="center">73–140</td><td class="center">104–187</td></tr>
-  <tr><td>Тактическая, теоретическая, психологическая подготовка</td><td class="center">2–6</td><td class="center">3–8</td><td class="center">10–36</td><td class="center">15–47</td><td class="center">42–62</td></tr>
-  <tr><td>Инструкторская и судейская практика</td><td class="center">—</td><td class="center">—</td><td class="center">10–29</td><td class="center">15–37</td><td class="center">42–62</td></tr>
-  <tr><td>Медицинские, медико-биологические, восстановительные мероприятия, тестирование и контроль</td><td class="center">2–9</td><td class="center">3–12</td><td class="center">10–29</td><td class="center">15–37</td><td class="center">42–125</td></tr>
-  <tr><td><b>Общее количество часов в год</b></td><td class="center"><b>234–312</b></td><td class="center"><b>312–416</b></td><td class="center"><b>520–728</b></td><td class="center"><b>728–936</b></td><td class="center"><b>1040–1664</b></td></tr>
-</table>
+      // 2. Оглавление (автоматическое)
+      content.push({
+        toc: {
+          title: { text: 'Содержание', style: 'header' }
+        }
+      });
 
-<h2>Приложение № 2. Календарный план воспитательной работы</h2>
-<table class="plan">
-  <colgroup><col style="width:6%"><col style="width:30%"><col style="width:44%"><col style="width:20%"></colgroup>
-  <tr><th>№</th><th>Направление работы</th><th>Мероприятия</th><th>Сроки</th></tr>
-  <tr><td class="center">1</td><td>Профориентационная деятельность</td><td>Судейская практика (изучение правил, помощь в судействе); инструкторская практика (помощь тренеру, составление конспектов)</td><td>В течение года</td></tr>
-  <tr><td class="center">2</td><td>Здоровьесбережение</td><td>Дни здоровья и спорта; беседы о режиме дня, питании, профилактике травматизма; формирование навыков самоконтроля</td><td>В течение года</td></tr>
-  <tr><td class="center">3</td><td>Патриотическое воспитание</td><td>Беседы, встречи с ветеранами спорта, известными спортсменами; участие в торжественных мероприятиях, парадах, церемониях</td><td>В течение года</td></tr>
-  <tr><td class="center">4</td><td>Развитие творческого мышления</td><td>Семинары, мастер-классы, показательные выступления; расширение кругозора</td><td>В течение года</td></tr>
-</table>
+      // 3. Содержимое
+      data.blocks.forEach(block => {
+        if (block.type === 'h1') {
+          // Для заголовков включаем tocItem, чтобы они попали в оглавление
+          content.push({ text: block.title || '(без названия)', style: 'header', tocItem: true });
+        } else {
+          content.push({ text: block.title || '(без названия)', style: 'subheader' });
+        }
+        // Текст разбиваем на параграфы
+        const paragraphs = block.content.split('\n').filter(p => p.trim() !== '');
+        paragraphs.forEach(p => {
+          content.push({ text: p, style: 'paragraph' });
+        });
+      });
 
-<h2>Приложение № 3. План мероприятий, направленный на предотвращение допинга в спорте и борьбу с ним</h2>
-<table class="plan">
-  <colgroup><col style="width:22%"><col style="width:42%"><col style="width:18%"><col style="width:18%"></colgroup>
-  <tr><th>Этап спортивной подготовки</th><th>Содержание мероприятия и его форма</th><th>Сроки</th><th>Ответственные</th></tr>
-  <tr><td>Этап начальной подготовки</td><td>Беседы об антидопинговых правилах, просмотр видеоматериалов, разъяснение последствий допинга</td><td>В течение года</td><td>Тренер-преподаватель</td></tr>
-  <tr><td>Учебно-тренировочный этап</td><td>Изучение антидопинговых правил, проверка лекарственных препаратов, подписание антидопинговых деклараций</td><td>В течение года</td><td>Тренер-преподаватель, врач</td></tr>
-  <tr><td>ЭССМ и ЭВСМ</td><td>Углублённое изучение антидопинговых правил, участие в семинарах, онлайн-курсах, контроль за применением препаратов</td><td>В течение года</td><td>Тренер-преподаватель, врач, специалист по антидопингу</td></tr>
-</table>
+      const docDefinition = {
+        pageSize: 'A4',
+        pageMargins: [40, 60, 40, 60],
+        footer: function(currentPage, pageCount) {
+          // Нумерация: титульный лист (currentPage === 1) без номера, остальные — currentPage
+          if (currentPage === 1) return '';
+          return { text: currentPage.toString(), alignment: 'center', margin: [0, 10, 0, 0] };
+        },
+        content: content,
+        styles: {
+          title: { fontSize: 28, bold: true },
+          subtitle: { fontSize: 16, italics: true },
+          header: { fontSize: 20, bold: true, margin: [0, 20, 0, 10] },
+          subheader: { fontSize: 16, bold: true, margin: [0, 15, 0, 5] },
+          paragraph: { fontSize: 12, margin: [0, 5, 0, 5] }
+        }
+      };
 
-<h2>Приложение № 4. Учебно-тематический план</h2>
-<table class="plan">
-  <colgroup><col style="width:20%"><col style="width:30%"><col style="width:12%"><col style="width:38%"></colgroup>
-  <tr><th>Этап спортивной подготовки</th><th>Темы по теоретической подготовке</th><th>Сроки</th><th>Краткое содержание</th></tr>
-  <tr><td rowspan="6">Этап начальной подготовки</td><td>История возникновения вида спорта «пауэрлифтинг» и его развитие</td><td>сентябрь</td><td>Зарождение и развитие вида спорта. Выдающиеся спортсмены. Чемпионы и призёры соревнований.</td></tr>
-  <tr><td>Физическая культура как средство физического развития и укрепления здоровья</td><td>октябрь</td><td>Понятие о физической культуре и спорте. Формы физической культуры. Воспитание трудолюбия, воли, нравственных качеств.</td></tr>
-  <tr><td>Теоретическая подготовка: правила соревнований, техника безопасности, гигиена</td><td>ноябрь</td><td>История пауэрлифтинга, правила соревнований, техника безопасности, основы гигиены и режима дня, основы самоконтроля.</td></tr>
-  <tr><td>Техническая подготовка: основы техники приседаний, жима лёжа, становой тяги</td><td>декабрь</td><td>Освоение техники по фазам. Имитационные упражнения, контроль положения тела, дыхания.</td></tr>
-  <tr><td>Самоконтроль в процессе занятий спортом</td><td>январь</td><td>Понятие о самоконтроле. Дневник самоконтроля. Понятие о травматизме.</td></tr>
-  <tr><td>Теоретические основы судейства. Правила вида спорта</td><td>февраль–март</td><td>Классификация соревнований. Жесты судей. Обязанности участников. Система зачёта.</td></tr>
-  <tr><td rowspan="6">Учебно-тренировочный этап</td><td>Роль и место физической культуры в формировании личностных качеств</td><td>январь</td><td>Физическая культура и спорт как социальные феномены. Воспитание волевых качеств.</td></tr>
-  <tr><td>Теоретическая подготовка: правила соревнований, антидопинговые правила, планирование</td><td>февраль</td><td>Правила соревнований, антидопинговые правила, основы планирования тренировочного процесса, спортивное питание.</td></tr>
-  <tr><td>Техническая подготовка: совершенствование техники базовых упражнений</td><td>март–апрель</td><td>Отработка старта в тяге, моста в жиме, глубины приседа. Видеоанализ, разбор ошибок.</td></tr>
-  <tr><td>Тактическая подготовка</td><td>май–июнь</td><td>Выбор стартовых весов, тактика подходов, взаимодействие с судьями и ассистентами.</td></tr>
-  <tr><td>Психологическая подготовка</td><td>июль</td><td>Развитие концентрации, управление стрессом, визуализация успеха, соревновательная мотивация.</td></tr>
-  <tr><td>Режим дня и питание, восстановительные мероприятия</td><td>август</td><td>Рациональное питание, массаж, баня, растяжка, дыхательные упражнения, режим отдыха.</td></tr>
-</table>
-`;
-}
-
-/* ---------- Вставка на страницу ---------- */
-document.getElementById('content').innerHTML = renderContent();
-
-/* ---------- Экспорт в Word ---------- */
-document.getElementById('dl').addEventListener('click', function () {
-  const content = renderContent();
-
-  const wordStyle = ''
-    + '@page WordSection1 {'
-    +   ' size: 29.7cm 21cm;'
-    +   ' mso-page-orientation: landscape;'
-    +   ' margin: 0.5cm 0.5cm 0.5cm 0.5cm;'
-    +   ' mso-header-margin: 0.5cm;'
-    +   ' mso-footer-margin: 0.5cm;'
-    + '}'
-    + 'div.WordSection1 { page: WordSection1; }'
-    + 'body { font-family: "Times New Roman", serif; font-size: 9pt; color: #000; }'
-    + 'h1 { font-size: 14pt; text-align: center; margin: 0 0 4pt; }'
-    + 'h2 { font-size: 11pt; margin: 12pt 0 4pt; }'
-    + 'h3 { font-size: 10pt; margin: 10pt 0 4pt; }'
-    + 'p { font-size: 9pt; margin: 0 0 4pt; line-height: 1.3; text-align: justify; }'
-    + 'table.plan {'
-    +   ' border-collapse: collapse;'
-    +   ' width: 100%;'
-    +   ' table-layout: fixed;'
-    +   ' margin-bottom: 8pt;'
-    + '}'
-    + 'table.plan th, table.plan td {'
-    +   ' border: 0.5pt solid #000;'
-    +   ' padding: 1pt 2pt;'
-    +   ' vertical-align: top;'
-    +   ' font-size: 8pt;'
-    +   ' line-height: 1.2;'
-    + '}'
-    + 'table.plan th {'
-    +   ' background: #e8e8e8;'
-    +   ' font-weight: bold;'
-    +   ' text-align: center;'
-    +   ' vertical-align: middle;'
-    + '}'
-    + 'table.plan td.center { text-align: center; vertical-align: middle; }'
-    + 'table.plan tr.section td { background: #f0f0f0; font-weight: bold; text-align: center; }'
-    + 'table.plan ul { margin: 2pt 0 2pt 12pt; padding: 0; }'
-    + 'table.plan li { margin-bottom: 1pt; }'
-    + '.small { font-size: 8pt; }';
-
-  const doc = ''
-    + '<html xmlns:o="urn:schemas-microsoft-com:office:office"'
-    +       ' xmlns:w="urn:schemas-microsoft-com:office:word"'
-    +       ' xmlns="http://www.w3.org/TR/REC-html40">'
-    + '<head><meta charset="utf-8">'
-    + '<title>Примерная программа по пауэрлифтингу</title>'
-    + '<!--[if gte mso 9]><xml><w:WordDocument>'
-    + '<w:View>Print</w:View><w:Zoom>100</w:Zoom>'
-    + '</w:WordDocument></xml><![endif]-->'
-    + '<style>' + wordStyle + '</style>'
-    + '</head>'
-    + '<body>'
-    + '<div class="WordSection1">'
-    +   '<h1>Примерная дополнительная образовательная программа<br>спортивной подготовки по виду спорта «пауэрлифтинг»</h1>'
-    +   '<p class="small" style="text-align:center;">(разработана на основе ФССП по виду спорта «пауэрлифтинг», утв. приказом Минспорта России от 14.08.2025 № 654)</p>'
-    +   content
-    +   '<p class="small"><b>Условные обозначения:</b> ФССП — федеральный стандарт спортивной подготовки; ОФП — общая физическая подготовка; СФП — специальная физическая подготовка; УТЭ — учебно-тренировочный этап; ЭССМ — этап совершенствования спортивного мастерства; ЭВСМ — этап высшего спортивного мастерства.</p>'
-    + '</div>'
-    + '</body></html>';
-
-  const blob = new Blob(['\ufeff', doc], { type: 'application/msword' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = 'Примерная_программа_пауэрлифтинг.doc';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-});
-</script>
+      pdfMake.createPdf(docDefinition).download('document.pdf');
+    }
+  </script>
 </body>
 </html>
